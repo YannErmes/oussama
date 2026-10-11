@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoyalUp Dashboard — manage fidélisation</title>
+<meta name="description" content="LoyalUp dashboard: customers, rewards, scan station, promos, Google Wallet integration.">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="js/cloud-config.js"></script>
+<script src="js/cloud.js" defer></script>
+<script src="js/loyalty.js" defer></script>
+<script src="js/dashboard.js" defer></script>
+</head>
+<body>
+<header><div class="wrap nav">
+<a class="logo" href="index.html"><span class="l">Loyal</span><span class="u">Up</span></a>
+<nav class="links"><a href="index.html#features">Site</a><a href="index.html#flow">Wallet flow</a><a href="dashboard.html">Dashboard</a></nav>
+<div class="nav-right"><span id="bizBadge" class="tag">…</span><a class="btn" href="index.html#flow">+ New customer</a><a class="login" href="#" id="logoutLink">Logout</a></div>
+</div></header>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  var s = window.Loy && Loy.getSession();
+  if (!s) { location.href = 'login.html'; return; }
+  document.getElementById('bizBadge').textContent = s.businessName || s.businessId;
+  document.getElementById('logoutLink').addEventListener('click', function (e) { e.preventDefault(); Loy.logout(); location.href = 'login.html'; });
+});
+</script>
+<div class="db-shell">
+<aside class="db-side">
+<b class="logo2">Loyal<em>Up</em></b>
+<span class="db-link on" data-tab="tOver">◉ Overview</span>
+<span class="db-link" data-tab="tCust">○ Customers</span>
+<span class="db-link" data-tab="tScan">○ Scan station</span>
+<span class="db-link" data-tab="tRew">○ Rewards & campaigns</span>
+<span class="db-link" data-tab="tPromo">○ Promotions</span>
+<span class="db-link" data-tab="tWallet">○ Wallet integration</span>
+<span class="db-link" data-tab="tLog">○ Activity log</span>
+</aside>
+<main class="db-main">
+<!-- OVERVIEW -->
+<div class="db-tabs on" id="tOver">
+<h2>Dashboard</h2><p class="muted">Everything for fidélisation is created here — members, stamps, streaks, rewards, promos, wallet passes.</p>
+<div class="db-cards">
+<div class="db-stat">Total Customers<strong id="stMembers">0</strong></div>
+<div class="db-stat">Total Visits<strong id="stVisits">0</strong></div>
+<div class="db-stat">Rewards Unlocked<strong id="stRewards">0</strong></div>
+<div class="db-stat">Best Streak<strong id="stStreak">0</strong></div>
+</div>
+<div class="db-panel"><h3>Your business QR (print & stick at counter)</h3>
+<div class="qr-shell"><div class="qr-frame"><div id="bizQRdash"></div><small>Customer scans → joins</small></div>
+<div><code id="joinURLdash" style="font-size:11px"></code><p class="muted" style="font-size:12px;margin-top:8px">Flow: customer scans this → gets fidelity QR + Google Wallet pass → each visit you scan <i>them</i> in Scan station → streak/points grow → promos pushed to wallet.</p></div></div>
+</div>
+</div>
+<!-- CUSTOMERS -->
+<div class="db-tabs" id="tCust">
+<h2>Customers</h2>
+<div class="db-panel"><div class="row"><input id="newCustName" class="input" style="max-width:280px" placeholder="e.g. oussama bouqontar"><button id="addCust" class="btn">Add customer</button></div></div>
+<div class="db-panel"><table class="tbl"><thead><tr><th>Member</th><th>Visits</th><th>Stamps</th><th>Points</th><th>Streak</th><th>Wallet</th></tr></thead><tbody id="custTable"></tbody></table></div>
+</div>
+<!-- SCAN -->
+<div class="db-tabs" id="tScan">
+<h2>Scan station (store side)</h2>
+<div class="db-panel">
+<div class="row"><select id="scanMember" class="input" style="max-width:300px"></select><input id="scanCode" class="input" style="max-width:200px" placeholder="or type LYL-XXXX"></div>
+<div class="row" style="margin-top:10px"><label style="font-size:12px"><input type="checkbox" id="forceScan"> force (same-day rescan)</label><button id="dashScan" class="btn">Scan & +1 tampon →</button></div>
+<div id="dashScanResult" class="scan-result"></div>
+<p class="muted" style="font-size:12px;margin-top:8px">Rules: 1 stamp + 10 pts / day • Christmas/New Year +1 stamp +20 pts • Weekend +10 • Streak 5+ +20 • 10 stamps = reward.</p>
+</div>
+</div>
+<!-- REWARDS -->
+<div class="db-tabs" id="tRew">
+<h2>Rewards & campaigns</h2>
+<div class="db-panel"><div class="row"><input id="rwName" class="input" style="max-width:240px" placeholder="Reward name"><input id="rwCost" class="input" style="max-width:120px" type="number" value="10"><button id="addReward" class="btn">Create reward</button></div></div>
+<div class="db-panel"><table class="tbl"><thead><tr><th>Reward</th><th>Cost</th><th>Status</th></tr></thead><tbody id="rewardList"></tbody></table>
+<p class="muted" style="font-size:12px;margin-top:8px">Tip: create a "Christmas coupon" in December — engine auto-applies occasion bonuses on every scan.</p></div>
+</div>
+<!-- PROMOS -->
+<div class="db-tabs" id="tPromo">
+<h2>Promotions → wallet notifications</h2>
+<div class="db-panel"><div class="row"><input id="promoText" class="input" style="flex:1;min-width:240px" placeholder="e.g. Christmas week: double stamps! 🎄"><button id="sendPromo" class="btn">Push to all wallets</button></div></div>
+<div class="db-panel"><div id="promoList" class="promo-list"></div></div>
+</div>
+<!-- WALLET -->
+<div class="db-tabs" id="tWallet">
+<h2>Google Wallet integration</h2>
+<div class="db-panel">
+<p class="muted" style="font-size:13px">Live integration = 3 steps. This demo already generates the pass link shape; connect your Issuer to go live.</p>
+<ol style="font-size:13px;margin:10px 0 10px 18px;display:grid;gap:6px">
+<li>Create a <b>Google Wallet Issuer account</b> → make a <b>Loyalty class</b> (program name, logo, colors).</li>
+<li>Paste Issuer ID + Class ID below. Your backend signs a JWT for each member (never in frontend).</li>
+<li>Customer taps "Add to Google Wallet" → pass appears with QR, stamps balance, promo messages.</li>
+</ol>
+<div class="field"><label>Business name</label><input id="cfgBusiness" class="input"></div>
+<div class="row"><div class="field" style="flex:1"><label>Issuer ID</label><input id="cfgIssuer" class="input" placeholder="e.g. 3388000000022…"></div><div class="field" style="flex:1"><label>Loyalty Class ID</label><input id="cfgClass" class="input"></div></div>
+<div class="row"><button id="saveCfg" class="btn">Save integration</button><button id="testWallet" class="btn btn-outline">Test "Add to Google Wallet" →</button></div>
+<p class="muted" style="font-size:11.5px;margin-top:10px">Docs: Google Wallet Loyalty passes — classes, objects, JWT save link <code>https://pay.google.com/gp/v/save/{JWT}</code>. Wire <code>Loy.googleWalletSaveURL()</code> in <code>js/loyalty.js</code> to your <code>/api/wallet/jwt?member=ID</code> endpoint.</p>
+</div>
+</div>
+<!-- LOG -->
+<div class="db-tabs" id="tLog">
+<h2>Activity log</h2>
+<div class="db-panel"><div id="logBox" class="log"></div></div>
+</div>
+</main>
+</div>
+</body>
+</html>

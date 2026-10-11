@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoyalUp — Business login</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/cloud-config.js"></script>
+<script src="js/cloud.js" defer></script>
+<script src="js/loyalty.js" defer></script>
+<style>.login-wrap{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;background:#F5FBF8;padding:24px}.login-card{max-width:400px;width:100%;padding:28px}.err{background:#FDECEC;border:1px solid #f5c2c2;color:#a33;border-radius:10px;padding:10px;font-size:13px;display:none;margin-top:10px}</style>
+</head>
+<body>
+<header><div class="wrap nav">
+<a class="logo" href="index.html"><span class="l">Loyal</span><span class="u">Up</span></a>
+<div class="nav-right"><a class="login" href="index.html">← Back to site</a></div>
+</div></header>
+<div class="login-wrap">
+<div class="card login-card">
+<div class="eyebrow">For businesses</div>
+<h2>Log in to your dashboard</h2>
+<p class="muted" style="font-size:13px">New here? Just type your business name + a password — your own dashboard + QR code are created instantly.</p>
+<div class="field"><label>Business name</label><input id="bizName" class="input" placeholder="e.g. Café Atlas" autocomplete="organization"></div>
+<div class="field"><label>Password</label><input id="bizPw" class="input" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+<div class="row" style="margin-top:6px"><button id="doLogin" class="btn" style="flex:1;justify-content:center">Log in / Sign up →</button></div>
+<div id="loginErr" class="err"></div>
+<p class="muted" style="font-size:11.5px;margin-top:10px">First login with a new name creates the business. Existing names need the right password.</p>
+</div>
+</div>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  var n = document.getElementById('bizName'), p = document.getElementById('bizPw'), e = document.getElementById('loginErr');
+  if (window.Loy && Loy.getSession()) location.href = 'dashboard.html';
+  function go() {
+    e.style.display = 'none';
+    if (!n.value.trim() || !p.value) { e.textContent = 'Business name + password required.'; e.style.display = 'block'; return; }
+    document.getElementById('doLogin').textContent = 'Opening dashboard…';
+    Loy.login(n.value.trim(), p.value).then(function () { location.href = 'dashboard.html'; })
+      .catch(function (err) { e.textContent = err.message || 'Login failed.'; e.style.display = 'block'; document.getElementById('doLogin').textContent = 'Log in / Sign up →'; });
+  }
+  document.getElementById('doLogin').addEventListener('click', go);
+  p.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') go(); });
+});
+</script>
+</body>
+</html>

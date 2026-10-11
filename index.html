@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoyalUp — Turn visitors into loyal customers</title>
+<meta name="description" content="LoyalUp: digital loyalty cards, QR + Google Wallet, streaks, rewards. No app needed.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230A1F33'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='900' font-size='16' fill='%230ED47F' text-anchor='middle'%3ELU%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="js/cloud-config.js"></script>
+<script src="js/cloud.js" defer></script>
+<script src="js/loyalty.js" defer></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<header><div class="wrap nav">
+<div class="logo"><span class="l">Loyal</span><span class="u">Up</span></div>
+<nav class="links"><a href="#features">Features</a><a href="#demo">Demo</a><a href="#flow">Get card</a><a href="#pricing">Pricing</a><a href="dashboard.html">Dashboard</a></nav>
+<div class="nav-right"><a class="login" href="login.html">Login</a><a class="btn" href="login.html">Get Started Free</a><button class="hamb" onclick="toggleMenu()">☰</button></div>
+</div></header>
+
+<div class="wrap hero" id="features">
+<div>
+<div class="badge"><i></i> The all-in-one loyalty platform for local businesses</div>
+<h1>Turn visitors into<br><span>loyal customers.</span></h1>
+<p class="sub">LoyalUp helps you create digital loyalty cards, track visits, and reward your customers — all in one simple platform. No app needed. Just scan, collect, and grow.</p>
+<div class="hero-cta"><a class="btn" href="#flow">Get Started Free →</a><a class="btn btn-outline" href="#demo">▶ Watch Demo</a><a class="btn btn-dark" href="dashboard.html">Open Dashboard</a></div>
+<div class="hero-feats">
+<div class="hf"><div class="hf-icon">⧉</div><b>Loyalty Cards & Stamps</b></div>
+<div class="hf"><div class="hf-icon">▦</div><b>QR Code Scanner</b></div>
+<div class="hf"><div class="hf-icon">💼</div><b>Apple/Google Wallet</b></div>
+<div class="hf"><div class="hf-icon">↗</div><b>Real-time Analytics</b></div>
+</div>
+</div>
+<div class="hero-visual">
+<div class="blob"></div><div class="blob2"></div>
+<div class="dash">
+<div class="dash-top">
+<div class="side"><b>Loyal<em>Up</em></b><div class="on">◉ Dashboard</div><div>○ Customers</div><div>○ Rewards</div><div>○ Campaigns</div><div>○ Analytics</div><div>○ Settings</div></div>
+<div class="dash-main">
+<div style="font-size:12px;font-weight:800">Overview</div>
+<div class="stat-row"><div class="stat">Total Customers<strong>1,248</strong><span class="up">+12%</span></div><div class="stat">Total Visits<strong>4,532</strong><span class="up">+18%</span></div><div class="stat">Rewards Given<strong>892</strong><span class="up">+25%</span></div></div>
+<div class="chart"><div style="font-size:10px;display:flex;justify-content:space-between"><span>Customer Growth</span><span>● ● ●</span></div>
+<svg viewBox="0 0 200 60" preserveAspectRatio="none"><path d="M0 50 C30 48 40 30 70 32 C100 34 110 20 140 18 C170 16 185 8 200 8" fill="none" stroke="#0EBC7B" stroke-width="2"/><path d="M0 50 C30 48 40 30 70 32 C100 34 110 20 140 18 C170 16 185 8 200 8 L200 60 L0 60 Z" fill="rgba(14,188,123,.12)"/></svg></div>
+<ul class="toplist"><li><span class="avatar" style="background:#e8b08a"></span> Sarah B.<span style="margin-left:auto">12 visits</span></li><li><span class="avatar" style="background:#9ac5e8"></span> Ahmed T.<span style="margin-left:auto">10 visits</span></li><li><span class="avatar" style="background:#d8a7d8"></span> oussama bouqontar<span style="margin-left:auto">8 visits</span></li></ul>
+</div>
+</div>
+</div>
+<div class="phone"><div class="screen">
+<div class="screen-top">Loyal<em>Up</em></div>
+<div class="shopcard"><span style="font-size:22px">☕</span><div style="font-size:10px"><b>The Coffee House</b><br>12 visits • 2 rewards</div></div>
+<div style="font-size:11px;font-weight:800;margin-top:10px">Loyalty Card</div>
+<div class="stamps"><div class="stamp fill">●</div><div class="stamp fill">●</div><div class="stamp fill">●</div><div class="stamp">○</div><div class="stamp">○</div><div class="stamp">○</div><div class="stamp">○</div><div class="stamp">○</div><div class="stamp">○</div><div class="stamp">○</div></div>
+<div class="progress">8/10<br><small>Get a free coffee!</small></div>
+</div></div>
+<div class="qr-card"><b style="font-size:11px">Scan &<br>Get Rewarded</b><div class="qr"></div><div style="font-size:9px;color:var(--green)">◍ LoyalUp</div></div>
+<div class="wallet-row"><div class="wallet">◉ Add to Apple Wallet</div><div class="wallet">▭ Add to Google Wallet</div></div>
+</div>
+</div>
+
+<section><div class="wrap">
+<div class="demo-stage" id="demo">
+<div class="eyebrow">Live experience</div>
+<h2>Hover a phone — it swaps to the front.</h2>
+<p class="muted">Just like your customers see it. Scan, collect a stamp, unlock a reward.</p>
+<div class="swap-zone" id="swapZone">
+<div class="lu-phone pos-center" data-i="0">
+<div class="lu-screen"><div class="lu-notch"></div>
+<div class="lu-status"><span>20:02</span><span>📶 🔋</span></div>
+<div class="lu-title">Cartes <span class="lu-plus">+</span></div>
+<div class="lu-card"><div class="lu-card-img">🎱</div><div class="lu-card-body"><b>oussama bouqontar</b><div style="font-size:10px;opacity:.7">Billard Program • 8/10</div><div class="lu-bar"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div></div></div>
+<div class="lu-qrbox"><div class="lu-qr" data-qr="https://loyalup.ma/m/LYL-OUSSAMA-BOUQONTAR"></div></div>
+<div style="font-size:10px;padding:8px">Show this QR to collect your stamp</div>
+</div>
+<div class="lu-toast toast-top"><span class="tick">✔</span><span>+1 tampon<br><small>Visite validée</small></span></div>
+<div class="lu-toast toast-bot"><span class="tick">🎁</span><span>Récompense débloquée<br><small>1 café offert</small></span></div>
+</div>
+<div class="lu-phone pos-left" data-i="1">
+<div class="lu-screen"><div class="lu-notch"></div>
+<div class="lu-status"><span>20:02</span><span>📶 🔋</span></div>
+<div class="lu-title">Cartes <span class="lu-plus">+</span></div>
+<div class="lu-card"><div class="lu-card-img" style="background:radial-gradient(circle at 50% 30%,#6a4a3a,#111 70%)">💅</div><div class="lu-card-body"><b>Rihab</b><div style="font-size:10px;opacity:.7">Beauty Program • 5/10</div><div class="lu-bar"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span><span></span><span></span><span></span></div></div></div>
+<div class="lu-qrbox"><div class="lu-qr" data-qr="https://loyalup.ma/m/LYL-RIHAB-5STAMPS"></div></div>
+<div style="font-size:10px;padding:8px">Show this QR to collect your stamp</div>
+</div>
+<div class="lu-toast toast-top"><span class="tick">✔</span><span>+1 tampon<br><small>Visite validée</small></span></div>
+<div class="lu-toast toast-bot"><span class="tick">🎁</span><span>Récompense débloquée<br><small>-20% soin</small></span></div>
+</div>
+<div class="lu-phone pos-right" data-i="2">
+<div class="lu-screen"><div class="lu-notch"></div>
+<div class="lu-status"><span>20:02</span><span>📶 🔋</span></div>
+<div class="lu-title">Cartes <span class="lu-plus">+</span></div>
+<div class="lu-card"><div class="lu-card-img" style="background:radial-gradient(circle at 50% 30%,#4a5a7a,#111 70%)">☕</div><div class="lu-card-body"><b>Yassine</b><div style="font-size:10px;opacity:.7">Coffee Program • 9/10</div><div class="lu-bar"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div></div></div>
+<div class="lu-qrbox"><div class="lu-qr" data-qr="https://loyalup.ma/m/LYL-YASSINE-9STAMPS"></div></div>
+<div style="font-size:10px;padding:8px">Show this QR to collect your stamp</div>
+</div>
+<div class="lu-toast toast-top"><span class="tick">✔</span><span>+1 tampon<br><small>Visite validée</small></span></div>
+<div class="lu-toast toast-bot"><span class="tick">🎁</span><span>Récompense débloquée<br><small>1 croissant offert</small></span></div>
+</div>
+</div>
+<div class="swap-hint">← Hover / tap a back phone to bring it forward → • auto-rotates</div>
+</div>
+</div></section>
+
+<!-- ============ FIDELITY FLOW: business QR -> member QR -> Wallet -> store scan ============ -->
+<section class="flow" id="flow"><div class="wrap">
+<div class="eyebrow">How fidélisation works</div>
+<h2>1. Customer scans you. 2. You scan customer. Streak grows.</h2>
+<p class="muted">The customer scans your business QR once to get his fidelity QR in Google Wallet. Every visit after that, you scan his code and his stamps, points and streak build up — with bonus points on Christmas & promos pushed straight to his wallet.</p>
+<div class="flow-grid">
+<div class="card flow-card">
+<div class="eyebrow">Step 1 — Join</div>
+<h3>Scan our code, get your fidelity QR + Google Wallet pass</h3>
+<div class="qr-shell">
+<div class="qr-frame"><div id="bizQR"></div><small>Business QR — scan to join</small></div>
+<div style="font-size:12px;flex:1;min-width:200px">Join link:<br><code id="joinLink" style="font-size:11px"></code><br><br>Try it: type a name, generate a real scannable member QR, then save it to Google Wallet.</div>
+</div>
+<div class="field"><label>Customer name</label><input id="memberName" class="input" value="oussama bouqontar"></div>
+<button id="createMember" class="btn">Generate my fidelity QR →</button>
+<div id="memberCard" class="member-card">
+<div class="row" style="justify-content:space-between"><b id="mName">—</b><small id="mId" style="opacity:.7">—</small></div>
+<div class="qr-shell"><div class="qr-frame"><div id="memberQR"></div><small>Fidelity QR — show at store</small></div>
+<div><button id="gwalletBtn" class="gwallet-btn"><span style="font-size:22px">G</span><span><small>Add to</small>Google Wallet</span></button>
+<div id="streakLine" style="margin-top:10px"></div></div></div>
+<div class="promo-list" id="promoFeed"></div>
+</div>
+</div>
+<div class="card flow-card">
+<div class="eyebrow">Step 2 — Collect (store side)</div>
+<h3>Customer returns → scan his code → streak starts</h3>
+<p class="muted" style="font-size:12.5px">1 stamp + 10 pts per visit. Christmas/New Year = +1 extra stamp & +20 pts. Weekends +10. Streak 5+ = +20. 10 stamps = 🎁 reward. Promo notifications land in his wallet.</p>
+<div class="field"><label>Member code (from fidelity QR)</label><input id="scanId" class="input" placeholder="LYL-XXXX"></div>
+<div class="row"><button id="doScan" class="btn">Scan & +1 tampon →</button><button id="camScan" class="btn btn-outline">📷 Camera scan</button></div>
+<div id="scanResult" class="scan-result"></div>
+<div class="row" style="margin-top:12px"><a class="btn btn-dark" href="dashboard.html">Manage all this in Dashboard →</a></div>
+</div>
+</div>
+</div></section>
+
+<div class="trust"><div class="wrap">
+<h3>Trusted by thousands of businesses</h3>
+<p>From cafés and restaurants to salons and retail stores, LoyalUp works for every type of business.</p>
+<div class="cats"><span>☕ Cafés & Restaurants</span><span>✂ Barbershops</span><span>⚕ Salons & Spas</span><span>🛍 Retail Stores</span><span>◍ Fitness & Wellness</span><span>⊞ And More...</span></div>
+</div></div>
+
+<section><div class="wrap">
+<div class="eyebrow">How it works</div>
+<h2>Simple for your customers.<br>Powerful for your business.</h2>
+<p class="muted">Get started in minutes. No complicated setup. Just 4 simple steps to turn casual visitors into loyal customers.</p>
+<p style="margin:12px 0"><a class="btn" href="#flow">Get Started Free →</a></p>
+<div class="steps" style="margin-top:22px">
+<div><div class="step-icon">🪪</div><b>1. Scan</b><div class="muted" style="font-size:12px">Customer scans your QR, gets fidelity pass in Google Wallet.</div></div><div class="arrow">→</div>
+<div><div class="step-icon">💼</div><b>2. Join</b><div class="muted" style="font-size:12px">Pass + QR saved. No app needed.</div></div><div class="arrow">→</div>
+<div><div class="step-icon">★</div><b>3. Collect</b><div class="muted" style="font-size:12px">You scan them each visit — streak & points grow, Christmas bonuses.</div></div><div class="arrow">→</div>
+<div><div class="step-icon">🎁</div><b>4. Redeem</b><div class="muted" style="font-size:12px">Rewards + promo notifications in wallet bring them back.</div></div>
+</div>
+</div></section>
+
+<section class="why" id="business"><div class="wrap why-grid">
+<div>
+<div class="eyebrow">Why LoyalUp</div>
+<h2>Everything you need to build lasting customer relationships.</h2>
+<p class="muted">LoyalUp gives you the tools to attract, engage and retain your customers — all from one easy-to-use platform. Dashboard included.</p>
+<ul class="check">
+<li><i>✔</i> Digital loyalty cards & stamps</li>
+<li><i>✔</i> QR code and NFC scanning</li>
+<li><i>✔</i> Apple/Google Wallet integration</li>
+<li><i>✔</i> Customer insights & analytics</li>
+<li><i>✔</i> Rewards, offers & campaigns</li>
+</ul>
+<div class="row"><a class="btn" href="#flow">Get Started Free →</a><a class="btn btn-outline" href="dashboard.html">Open Dashboard</a></div>
+</div>
+<div>
+<div class="why-visual">
+<div class="mini-phone"><div class="img"></div><div style="padding:10px;font-size:11px"><b>LoyalUp</b><div class="shopcard" style="margin:8px 0"><span>☕</span><div>The Coffee House</div></div><div class="stamps"><div class="stamp fill">●</div><div class="stamp fill">●</div><div class="stamp">○</div><div class="stamp">○</div><div class="stamp">○</div></div><div class="progress">7/10</div></div></div>
+<div class="cust-card"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:12px"><span style="background:#0A1F33;color:#fff;padding:2px 6px;border-radius:6px">LoyalUp</span> Customers</b><span style="margin-left:auto;font-size:10px;background:#f2f5f3;padding:4px 8px;border-radius:999px">🔍 Search customers...</span></div>
+<div class="cust-row"><span class="avatar" style="background:#e8b08a"></span><span><b>Sarah B.</b><br>12 visits • 2x</span><span class="pill green">Loyal customer</span></div>
+<div class="cust-row"><span class="avatar" style="background:#9ac5e8"></span><span><b>Ahmed T.</b><br>10 visits • 1x</span><span class="pill green">Loyal customer</span></div>
+<div class="cust-row"><span class="avatar" style="background:#d8a7d8"></span><span><b>oussama bouqontar</b><br>8 visits • 1x</span><span class="pill">Regular</span></div>
+<div class="cust-row"><span class="avatar" style="background:#bfe8cc"></span><span><b>Yassine M.</b><br>5 visits • new</span><span class="pill">Regular</span></div>
+<div style="display:flex;gap:8px;margin-top:10px"><div class="wallet" style="font-size:10px">◉ Add to Apple Wallet</div><div class="wallet" style="font-size:10px">▭ Add to Google Wallet</div></div>
+</div>
+<div class="scan-card"><div style="font-size:20px">▦▦<br>▦▦</div><b>Scan. Collect.<br>Get rewarded.</b><div style="height:90px;margin:10px 0;background:linear-gradient(#c98f5f,#8a5a30);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:40px">☕</div><div class="hand">No app needed.<br>Just your phone. ⤺</div></div>
+</div>
+</div>
+</div></section>
+
+<section class="reviews" id="resources"><div class="wrap">
+<b style="font-size:15px">What our customers say</b><div class="muted" style="font-size:12px">Real businesses. Real results.</div>
+<div class="rev-grid">
+<div class="rev"><div class="rev-head"><span class="avatar" style="width:48px;height:48px;background:#c9a88a"></span><div style="font-size:10px">★★★★★</div></div><p>"LoyalUp helped us grow our repeat customers by 40% in just 2 months. It's simple, effective, and easy to use."</p><br><b>Sofia El Mansouri</b><div class="muted" style="font-size:11px">Café Owner - Casablanca</div></div>
+<div class="rev"><div class="rev-head"><span class="avatar" style="width:48px;height:48px;background:#8aa8c9"></span><div style="font-size:10px">★★★★★</div></div><p>"The dashboard gives us valuable insights about our customers. We can now create targeted offers and bring them back."</p><br><b>Youssef Benali</b><div class="muted" style="font-size:11px">Barber Shop Owner - Rabat</div></div>
+<div class="rev"><div class="rev-head"><span class="avatar" style="width:48px;height:48px;background:#d8a7a0"></span><div style="font-size:10px">★★★★★</div></div><p>"Our customers love having their digital loyalty card. It's modern, fast and makes them feel valued."</p><br><b>Nadia Lahrach</b><div class="muted" style="font-size:11px">Salon Owner - Marrakech</div></div>
+</div>
+</div></section>
+
+<section id="pricing"><div class="wrap">
+<div class="pricing-head"><div><div class="eyebrow">Pricing</div><h2>Plans for every business.</h2><p class="muted">Choose the plan that fits your needs. Upgrade or downgrade anytime.</p></div>
+<div class="toggle"><button id="bM" class="on" onclick="setBilling('m')">Monthly</button><button id="bY" onclick="setBilling('y')">Yearly <span style="color:var(--green)">Save 20%</span></button></div></div>
+<div class="plans">
+<div class="plan"><h4>Starter</h4><small>Perfect for small businesses.</small><div class="price"><span class="p" data-m="99 DH" data-y="79 DH">99 DH</span> <span>/month</span></div><ul><li>Up to 500 customers</li><li>Loyalty cards & stamps</li><li>QR scanner</li><li>Basic analytics</li></ul><a class="btn-outline btn" href="#">Get Started</a></div>
+<div class="plan pop"><div class="pop-tag">Most Popular</div><h4>Pro</h4><small>Perfect for growing businesses.</small><div class="price"><span class="p" data-m="199 DH" data-y="159 DH">199 DH</span> <span>/month</span></div><ul><li>Up to 2,000 customers</li><li>Rewards & campaigns</li><li>Apple/Google Wallet</li><li>Advanced analytics</li></ul><a class="btn" href="#">Get Started</a></div>
+<div class="plan"><h4>Business</h4><small>For established brands.</small><div class="price"><span class="p" data-m="399 DH" data-y="319 DH">399 DH</span> <span>/month</span></div><ul><li>Up to 10,000 customers</li><li>Multi-location</li><li>Team members</li><li>Priority support</li></ul><a class="btn-outline btn" href="#">Get Started</a></div>
+<div class="plan"><h4>Enterprise</h4><small>For large organizations.</small><div class="price">Custom pricing</div><ul><li>Unlimited customers</li><li>Custom integrations</li><li>Dedicated support</li><li>Onboarding & training</li></ul><a class="btn-outline btn" href="#">Contact Sales</a></div>
+</div>
+<div class="cta"><div><div class="logo"><span>Loyal</span><span style="color:#0EBC7B">Up</span></div><small>More visits. More loyalty. More growth.</small></div><div><b>Ready to turn your visitors into loyal customers?</b><div><small>Join thousands of businesses already growing with LoyalUp.</small></div></div><a class="btn" href="#flow">Get Started Free →</a></div>
+</div></section>
+
+<footer><div class="wrap foot">
+<div><b>LoyalUp</b> © 2025 LoyalUp. All rights reserved.</div>
+<nav><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="dashboard.html">Dashboard</a></nav>
+<div style="display:flex;gap:10px;font-size:14px"><a href="#">in</a><a href="#">◍</a><a href="#">𝕏</a><a href="#">▶</a></div>
+</div></footer>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoyalUp — Get your loyalty card</title>
+<meta name="description" content="Scan, join, collect stamps in your Google Wallet.">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="js/cloud-config.js"></script>
+<script src="js/cloud.js" defer></script>
+<script src="js/loyalty.js" defer></script>
+<style>.join-wrap{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#07231d,#0b3d2f);padding:24px;color:#fff}.join-card{max-width:440px;width:100%;padding:28px;background:#fff;color:var(--navy)}</style>
+</head>
+<body>
+<header><div class="wrap nav">
+<a class="logo" href="index.html"><span class="l">Loyal</span><span class="u">Up</span></a>
+</div></header>
+<div class="join-wrap">
+<div class="card join-card" id="joinBox">
+<div class="eyebrow">Loyalty card</div>
+<h2 id="bizTitle">Join…</h2>
+<p class="muted" style="font-size:13px" id="bizSub">Loading your store…</p>
+<div id="step1">
+<div class="field"><label>Your name</label><input id="custName" class="input" placeholder="e.g. oussama bouqontar"></div>
+<button id="joinBtn" class="btn" style="width:100%;justify-content:center">Get my fidelity QR →</button>
+</div>
+<div id="step2" style="display:none">
+<div class="qr-frame" style="margin:14px auto;max-width:220px"><div id="custQR"></div><small>Show this QR at the store every visit</small></div>
+<div class="row" style="justify-content:center"><button id="jWallet" class="gwallet-btn"><span style="font-size:22px">G</span><span><small>Add to</small>Google Wallet</span></button></div>
+<div class="promo-list" id="jPromos"></div>
+<p class="muted" style="font-size:11.5px;margin-top:10px">Saved on this phone. Screenshot your code — the store scans it each visit to grow your streak 🔥</p>
+</div>
+</div>
+</div>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  var q = new URLSearchParams(location.search);
+  var bid = q.get('b') || '', preM = q.get('m') || '';
+  var box = document.getElementById('joinBox');
+  function joinURL() { return location.origin + '/join.html?b=' + bid; }
+  function useCloud() { return window.Cloud && Cloud.enabled && Cloud.enabled(); }
+  function bizTitle(name) {
+    document.getElementById('bizTitle').textContent = name;
+    document.getElementById('bizSub').textContent = 'Scan done ✓ — enter your name to get your fidelity QR + Google Wallet pass.';
+  }
+  if (useCloud()) {
+    Cloud.bizInfo(bid).then(function (d) { bizTitle(d.businessName); })
+      .catch(function () { document.getElementById('bizTitle').textContent = 'Invalid QR'; document.getElementById('bizSub').textContent = 'Ask the store for their current QR code.'; document.getElementById('step1').style.display = 'none'; });
+  } else {
+  fetch('/api/public/business?b=' + encodeURIComponent(bid)).then(function (r) { return r.json(); }).then(function (d) {
+    if (d.error) { document.getElementById('bizTitle').textContent = 'Invalid QR'; document.getElementById('bizSub').textContent = 'Ask the store for their current QR code.'; document.getElementById('step1').style.display = 'none'; return; }
+    bizTitle(d.businessName);
+  }).catch(function () { document.getElementById('bizTitle').textContent = 'Join'; });
+  }
+  // Local join (works offline): member pass encoded with business id so only THEIR store scan counts it.
+  document.getElementById('joinBtn').addEventListener('click', function () {
+    var name = (document.getElementById('custName').value || '').trim() || 'Guest';
+    var btn = document.getElementById('joinBtn'); btn.textContent = 'Creating your card…';
+    function showCard(id) {
+      var payload = location.origin + '/join.html?b=' + bid + '&m=' + id;
+      document.getElementById('step1').style.display = 'none';
+      document.getElementById('step2').style.display = 'block';
+      var el = document.getElementById('custQR');
+      if (window.QRCode) new QRCode(el, { text: payload, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+      else el.innerHTML = '<div class="promo">' + id + '</div>';
+      document.getElementById('jWallet').onclick = function () {
+        var wurl = useCloud()
+          ? '/.netlify/functions/wallet-jwt?b=' + encodeURIComponent(bid) + '&member=' + encodeURIComponent(id)
+          : '/api/public/wallet/jwt?b=' + encodeURIComponent(bid) + '&member=' + encodeURIComponent(id);
+        fetch(wurl).then(function (r) { return r.json(); })
+          .then(function (d) { window.open(d.saveUrl, '_blank'); })
+          .catch(function () { window.open('https://pay.google.com/gp/v/save/DEMO.' + btoa(id).replace(/=+$/, ''), '_blank'); });
+      };
+      try {
+        var mine = JSON.parse(localStorage.getItem('lyl_mycards') || '[]');
+        mine.push({ businessId: bid, memberId: id, name: name, payload: payload });
+        localStorage.setItem('lyl_mycards', JSON.stringify(mine));
+      } catch (e) {}
+    }
+    // Register in THIS business's database so their store scan recognizes you.
+    if (useCloud()) {
+      Cloud.join(bid, name).then(function (d) { showCard(d.memberId); })
+        .catch(function () { document.getElementById('joinBtn').textContent = 'Get my fidelity QR →'; alert('Join failed — check connection.'); });
+      return;
+    }
+    fetch('/api/public/join', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ b: bid, name: name }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { showCard(d.memberId); })
+      .catch(function () { showCard('LYL-' + Math.random().toString(36).slice(2, 6).toUpperCase() + Date.now().toString(36).slice(-4).toUpperCase()); });
+  });
+});
+</script>
+</body>
+</html>
