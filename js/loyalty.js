@@ -24,21 +24,21 @@
   function uid(p) { return (p || 'LYL') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase() + Date.now().toString(36).slice(-4).toUpperCase(); }
 
   function useCloud() { return (w.Cloud && Cloud.enabled && Cloud.enabled()); }
-  function login(businessName, password) {
-    if (useCloud()) return Cloud.login(businessName, password);
+  function login(businessName, password, profile) {
+    if (useCloud()) return Cloud.login(businessName, password, profile);
     return api('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ businessName: businessName, password: password }) }).then(function (d) {
+      body: JSON.stringify({ businessName: businessName, password: password, profile: profile || {} }) }).then(function (d) {
       if (d.error) throw new Error(d.error);
-      setSession({ token: d.token, businessId: d.business.id, businessName: d.business.name });
+      setSession({ token: d.token, businessId: d.business.id, businessName: d.business.name, profile: d.business });
       return pullFromServer().then(function () { return d; });
     });
   }
-  function signup(businessName, password) {
-    if (useCloud()) return Cloud.login(businessName, password);
+  function signup(businessName, password, profile) {
+    if (useCloud()) return Cloud.login(businessName, password, profile);
     return api('/api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ businessName: businessName, password: password }) }).then(function (d) {
+      body: JSON.stringify({ businessName: businessName, password: password, profile: profile || {} }) }).then(function (d) {
       if (d.error) throw new Error(d.error);
-      setSession({ token: d.token, businessId: d.business.id, businessName: d.business.name });
+      setSession({ token: d.token, businessId: d.business.id, businessName: d.business.name, profile: d.business });
       return pullFromServer().then(function () { return d; });
     });
   }
@@ -168,9 +168,9 @@
     } catch (e) {}
   }
   function pullFromServer() {
-    if (useCloud()) return Cloud.pull();
+    if (useCloud()) return Cloud.pull().then(function () { try { var s = getSession(); if (s) { s.profile = s.profile || {}; localStorage.setItem('lyl_session', JSON.stringify(s)); } } catch (e) {} });
     return api('/api/bootstrap').then(function (d) {
-      if (d.business) setSession(Object.assign(getSession() || {}, { businessId: d.business.id, businessName: d.business.name }));
+      if (d.business) setSession(Object.assign(getSession() || {}, { businessId: d.business.id, businessName: d.business.name, profile: d.business }));
       if (d.members) write('members', d.members);
       if (d.promos) write('promos', d.promos);
       if (d.rewards) write('rewards', d.rewards);

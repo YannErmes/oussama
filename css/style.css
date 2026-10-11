@@ -192,3 +192,42 @@ footer{border-top:1px solid #eef3f0;padding:16px 0;font-size:11px;color:#7a8CA0;
 .lu-phone.pos-left{transform:translate3d(-128px,0,-60px) scale(.8) rotateY(20deg)}.lu-phone.pos-right{transform:translate3d(128px,0,-60px) scale(.8) rotateY(-20deg)}.swap-zone{height:580px}.toast-top{left:-8px}.toast-bot{right:-8px}
 .plans{grid-template-columns:1fr}.hero-feats{grid-template-columns:1fr 1fr}.why-visual{grid-template-columns:1fr}.phone{left:8px;width:180px}.qr-card{right:8px}.db-cards{grid-template-columns:1fr}
 }
+/* ---------- MOTION (GPU-only reveals + micro-interactions) ---------- */
+.js [data-rv]{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.22,.9,.28,1),transform .7s cubic-bezier(.22,.9,.28,1)}
+.js [data-rv].in{opacity:1;transform:none}
+/* hero entrance — pure CSS so it ALWAYS plays on load, even if JS fails */
+.hero > div:first-child > *{animation:heroIn .8s cubic-bezier(.22,.9,.28,1) backwards}
+.hero > div:first-child > :nth-child(2){animation-delay:.08s}
+.hero > div:first-child > :nth-child(3){animation-delay:.16s}
+.hero > div:first-child > :nth-child(4){animation-delay:.26s}
+.hero > div:first-child > :nth-child(5){animation-delay:.36s}
+.hero-visual{animation:heroZoom .9s cubic-bezier(.22,.9,.28,1) backwards}
+@keyframes heroIn{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:none}}
+@keyframes heroZoom{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+/* continuous motion — impossible to miss */
+.phone{animation:bob 4.5s ease-in-out infinite}
+.qr-card{animation:bob 5.5s ease-in-out .8s infinite}
+@keyframes bob{0%,100%{margin-top:0}50%{margin-top:-10px}}
+.btn{position:relative;overflow:hidden}
+.btn:after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-20deg);animation:shine 3.2s ease-in-out infinite}
+@keyframes shine{0%,60%{left:-60%}100%{left:160%}}
+.btn,.wallet,.qr-card,.plan,.rev,.flow-card{transition:transform .25s ease,box-shadow .25s ease,background .2s,border-color .2s}
+.btn:hover{box-shadow:0 10px 24px rgba(14,188,123,.35)}
+.plan:hover,.rev:hover,.flow-card:hover{transform:translateY(-4px);box-shadow:0 18px 44px rgba(10,31,51,.13)}
+.links a{position:relative}
+.links a:after{content:"";position:absolute;left:0;bottom:-4px;height:2px;width:0;background:var(--green);transition:width .25s ease}
+.links a:hover:after{width:100%}
+button,.btn,.lu-phone,.db-link,[onclick]{cursor:pointer}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.badge i{animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(14,188,123,.4)}50%{box-shadow:0 0 0 6px rgba(14,188,123,0)}}
+.blob{animation:drift 9s ease-in-out infinite}
+.blob2{animation:drift 11s ease-in-out infinite reverse}
+@keyframes drift{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+.chart path{stroke-dasharray:400;stroke-dashoffset:400;animation:draw 1.6s ease .3s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){
+.js [data-rv]{opacity:1;transform:none;transition:none}
+*,*:before,*:after{animation-duration:.001s!important;transition-duration:.001s!important}
+html{scroll-behavior:auto}
+}

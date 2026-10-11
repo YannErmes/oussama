@@ -32,6 +32,17 @@
     $('joinURLdash').textContent = Loy.businessJoinURL();
     $('logBox').textContent = Loy.getLog().join('\n') || 'No activity yet.';
     var c = Loy.getCfg(); $('cfgBusiness').value = c.business; $('cfgIssuer').value = c.issuerId || ''; $('cfgClass').value = c.classId || '';
+    // business profile (from login: city, size, type, map pin)
+    var s = Loy.getSession && Loy.getSession(), prof = (s && s.profile) || {};
+    if ($('profLine')) {
+      var bits = [prof.btype, prof.city, prof.size ? prof.size + ' people' : '', prof.loc_label].filter(function (x) { return x; });
+      $('profLine').innerHTML = bits.length ? bits.map(function (b) { return '<span class="chip" style="background:#EDFBF3;color:#0a7a4f">' + b + '</span>'; }).join(' ') : '<span class="muted" style="font-size:12px">No profile yet — set it at next login.</span>';
+    }
+    if ($('profCity') && document.activeElement !== $('profCity')) {
+      if (prof.city) $('profCity').value = prof.city;
+      if (prof.size) $('profSize').value = prof.size;
+      if (prof.btype) $('profType').value = prof.btype;
+    }
   }
   $('addCust').addEventListener('click', function () { var n = $('newCustName').value.trim() || 'oussama bouqontar'; Loy.createMember(n); $('newCustName').value = ''; refresh(); });
   $('addReward').addEventListener('click', function () {
@@ -51,6 +62,17 @@
   $('saveCfg').addEventListener('click', function () {
     Loy.saveCfg({ business: $('cfgBusiness').value.trim() || 'LoyalUp Demo Store', issuerId: $('cfgIssuer').value.trim(), classId: $('cfgClass').value.trim() || 'loyalup-loyalty-class' });
     refresh(); alert('Saved. Business QR now points to your store.');
+  });
+  var saveProf = $('saveProfile');
+  if (saveProf) saveProf.addEventListener('click', function () {
+    var prof = { city: $('profCity').value, size: $('profSize').value, btype: $('profType').value };
+    function done() {
+      var s = Loy.getSession(); if (s) { try { s.profile = Object.assign(s.profile || {}, prof); localStorage.setItem('lyl_session', JSON.stringify(s)); } catch (e) {} }
+      refresh(); alert('Profile saved.');
+    }
+    if (window.Cloud && Cloud.enabled && Cloud.enabled()) { Cloud.updateProfile(prof).then(done).catch(function () { done(); }); return; }
+    fetch('/api/admin/config', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (Loy.getSession().token || '') }, body: JSON.stringify({ profile: prof }) })
+      .then(function () { return Loy.pullFromServer ? Loy.pullFromServer().catch(function () {}) : null; }).then(done).catch(function () { done(); });
   });
   $('testWallet').addEventListener('click', function () {
     var ms = Loy.getMembers(); if (!ms.length) { alert('Create a customer first.'); return; }

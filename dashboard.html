@@ -47,6 +47,10 @@ window.addEventListener('DOMContentLoaded', function () {
 <div class="db-stat">Rewards Unlocked<strong id="stRewards">0</strong></div>
 <div class="db-stat">Best Streak<strong id="stStreak">0</strong></div>
 </div>
+<div class="db-panel"><h3>Business profile</h3>
+<div id="profLine" class="row" style="margin-bottom:10px"></div>
+<div class="row"><input id="profCity" class="input" style="max-width:180px" placeholder="City"><input id="profSize" class="input" style="max-width:150px" placeholder="Size (e.g. 2-5)"><input id="profType" class="input" style="max-width:220px" placeholder="Type (e.g. Barbershop)"><button id="saveProfile" class="btn btn-outline">Save profile</button></div>
+</div>
 <div class="db-panel"><h3>Your business QR (print & stick at counter)</h3>
 <div class="qr-shell"><div class="qr-frame"><div id="bizQRdash"></div><small>Customer scans → joins</small></div>
 <div><code id="joinURLdash" style="font-size:11px"></code><p class="muted" style="font-size:12px;margin-top:8px">Flow: customer scans this → gets fidelity QR + Google Wallet pass → each visit you scan <i>them</i> in Scan station → streak/points grow → promos pushed to wallet.</p></div></div>

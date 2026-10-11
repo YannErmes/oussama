@@ -67,7 +67,8 @@ def ensure_col(c, table, col, ddl):
 def init_db():
     c = db(); e = c.execute
     e("""CREATE TABLE IF NOT EXISTS businesses(id TEXT PRIMARY KEY, name TEXT UNIQUE,
-         pw TEXT, createdAt TEXT)""")
+         pw TEXT, city TEXT DEFAULT '', size TEXT DEFAULT '', btype TEXT DEFAULT '',
+         lat REAL DEFAULT 0, lng REAL DEFAULT 0, loc_label TEXT DEFAULT '', createdAt TEXT)""")
     e("""CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, businessId TEXT, createdAt TEXT)""")
     e("""CREATE TABLE IF NOT EXISTS members(id TEXT PRIMARY KEY, businessId TEXT, name TEXT,
          phone TEXT DEFAULT '', visits INT DEFAULT 0, stamps INT DEFAULT 0, points INT DEFAULT 0,
@@ -84,6 +85,10 @@ def init_db():
          PRIMARY KEY(businessId, k))""")
     for t in ("members", "rewards", "promos", "activity"):
         ensure_col(c, t, "businessId", "TEXT DEFAULT ''")
+    for col, ddl in [("city", "TEXT DEFAULT ''"), ("size", "TEXT DEFAULT ''"),
+                     ("btype", "TEXT DEFAULT ''"), ("lat", "REAL DEFAULT 0"),
+                     ("lng", "REAL DEFAULT 0"), ("loc_label", "TEXT DEFAULT ''")]:
+        ensure_col(c, "businesses", col, ddl)
     # migrate legacy config(k,v) -> config(businessId,k,v)
     if "businessId" not in cols(c, "config"):
         try:
@@ -105,21 +110,46 @@ def init_db():
         c.commit()
     c.close()
 
-def get_or_create_business(c, name, pw, silent=False):
+def biz_public(row):
+    return {"id": row["id"], "name": row["name"], "city": row["city"] if "city" in row.keys() else "",
+            "size": row["size"] if "size" in row.keys() else "",
+            "btype": row["btype"] if "btype" in row.keys() else "",
+            "lat": row["lat"] if "lat" in row.keys() else 0,
+            "lng": row["lng"] if "lng" in row.keys() else 0,
+            "loc_label": row["loc_label"] if "loc_label" in row.keys() else ""}
+
+def get_or_create_business(c, name, pw, profile=None, silent=False):
     name = (name or "").strip() or "My Business"
+    profile = profile or {}
     row = c.execute("SELECT * FROM businesses WHERE LOWER(name)=LOWER(?)", (name,)).fetchone()
     if row:
-        return dict(row)
+        # fill empty profile fields on re-login when provided
+        ups = {k: str(profile.get(k, "") or "") for k in ("city", "size", "btype", "loc_label")}
+        try:
+            if profile.get("lat") or profile.get("lng"):
+                ups["lat"] = float(profile.get("lat") or 0); ups["lng"] = float(profile.get("lng") or 0)
+        except Exception:
+            pass
+        for k, v in ups.items():
+            if v and not (row[k] if k in row.keys() else ""):
+                c.execute("UPDATE businesses SET %s=? WHERE id=?" % k, (v, row["id"]))
+        c.commit()
+        row = c.execute("SELECT * FROM businesses WHERE id=?", (row["id"],)).fetchone()
+        return biz_public(row)
     bid = new_biz_id()
-    c.execute("INSERT INTO businesses VALUES(?,?,?,?)",
-              (bid, name, hash_pw(pw) if pw else "", now_iso()))
+    c.execute("""INSERT INTO businesses(id,name,pw,city,size,btype,lat,lng,loc_label,createdAt)
+                 VALUES(?,?,?,?,?,?,?,?,?,?)""",
+              (bid, name, hash_pw(pw) if pw else "", str(profile.get("city", "") or ""),
+               str(profile.get("size", "") or ""), str(profile.get("btype", "") or ""),
+               float(profile.get("lat") or 0), float(profile.get("lng") or 0),
+               str(profile.get("loc_label", "") or ""), now_iso()))
     c.execute("INSERT OR IGNORE INTO config VALUES(?,?,?)", (bid, "business", name))
     c.execute("INSERT OR IGNORE INTO config VALUES(?,?,?)", (bid, "issuerId", ""))
     c.execute("INSERT OR IGNORE INTO config VALUES(?,?,?)", (bid, "classId", "loyalup-loyalty-class"))
     c.commit()
     if not silent:
         log(c, bid, "Business registered: %s" % name)
-    return {"id": bid, "name": name}
+    return biz_public(c.execute("SELECT * FROM businesses WHERE id=?", (bid,)).fetchone())
 
 def seed_business(c, bid):
     for name, visits, stamps, points, streak in [
@@ -285,7 +315,7 @@ class Handler(SimpleHTTPRequestHandler):
             c.close(); return None
         b = c.execute("SELECT * FROM businesses WHERE id=?", (s["businessId"],)).fetchone()
         c.close()
-        return {"id": b["id"], "name": b["name"]} if b else None
+        return biz_public(b) if b else None
 
     def do_GET(self):
         u = urlparse(self.path)
@@ -337,6 +367,7 @@ class Handler(SimpleHTTPRequestHandler):
         if u.path in ("/api/auth/signup", "/api/auth/login"):
             name = (d.get("businessName") or "").strip()
             pw = d.get("password") or ""
+            profile = d.get("profile") or {}
             if not name or not pw:
                 return self._json({"error": "Business name + password required."}, 400)
             c = db()
@@ -344,12 +375,12 @@ class Handler(SimpleHTTPRequestHandler):
             if u.path == "/api/auth/signup":
                 if row:
                     c.close(); return self._json({"error": "Name taken — log in instead."}, 409)
-                biz = get_or_create_business(c, name, pw)
+                biz = get_or_create_business(c, name, pw, profile)
                 seed_business(c, biz["id"]); c.commit()
             else:  # login: auto-create unknown business so testing just works
                 if row and row["pw"] and not check_pw(pw, row["pw"]):
                     c.close(); return self._json({"error": "Wrong password for this business."}, 403)
-                biz = get_or_create_business(c, name, pw if not row else None)
+                biz = get_or_create_business(c, name, pw if not row else None, profile if not row else profile)
                 if not row:
                     seed_business(c, biz["id"]); c.commit()
                     log(biz["id"], "Business auto-registered on first login: %s" % name)
@@ -439,6 +470,18 @@ class Handler(SimpleHTTPRequestHandler):
             for k in ("business", "issuerId", "classId"):
                 if k in d:
                     c.execute("INSERT INTO config(businessId,k,v) VALUES(?,?,?) ON CONFLICT(businessId,k) DO UPDATE SET v=excluded.v", (bid, k, d[k]))
+            prof = d.get("profile") or {}
+            for k in ("city", "size", "btype", "loc_label"):
+                if k in prof:
+                    c.execute("UPDATE businesses SET %s=? WHERE id=?" % k, (str(prof[k] or ""), bid))
+            if "lat" in prof or "lng" in prof:
+                try:
+                    c.execute("UPDATE businesses SET lat=?,lng=? WHERE id=?",
+                              (float(prof.get("lat") or 0), float(prof.get("lng") or 0), bid))
+                except Exception:
+                    pass
+            if prof.get("business"):
+                c.execute("UPDATE businesses SET name=? WHERE id=?", (prof["business"], bid))
             c.commit(); c.close()
             return self._json({"ok": True, "config": get_config(bid)})
         if u.path == "/api/auth/logout":

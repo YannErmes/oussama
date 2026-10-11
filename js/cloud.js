@@ -38,14 +38,17 @@
   function findBiz(name) {
     return q('businesses?name=ilike.' + encodeURIComponent(name) + '&select=*').then(function (rows) { return (rows && rows[0]) || null; });
   }
-  function login(businessName, password) {
+  function login(businessName, password, profile) {
     var name = (businessName || '').trim();
+    profile = profile || {};
     return findBiz(name).then(function (b) {
       if (!b) { // auto-provision like the Python backend: new name just works
         var id = biz();
         return sha256(id + '::' + password).then(function (h) {
+          var row = { id: id, name: name, pw: h, city: profile.city || '', size: profile.size || '',
+            btype: profile.btype || '', lat: profile.lat || 0, lng: profile.lng || 0, loc_label: profile.loc_label || '' };
           return q('businesses', { method: 'POST', headers: Object.assign(H(true), { Prefer: 'return=representation' }),
-            body: JSON.stringify({ id: id, name: name, pw: h }) }).then(function (rows) {
+            body: JSON.stringify(row) }).then(function (rows) {
             var nb = (rows && rows[0]) || { id: id, name: name };
             return seed(id).then(function () { sess(nb); return pull().then(function () { return { business: nb }; }); });
           });
@@ -121,6 +124,15 @@
     });
     return chain;
   }
+  function updateProfile(prof) {
+    var s; try { s = JSON.parse(localStorage.getItem('lyl_session') || 'null'); } catch (e) {}
+    if (!s) return Promise.reject(new Error('login required'));
+    var row = {};
+    ['city', 'size', 'btype', 'loc_label'].forEach(function (k) { if (prof[k] !== undefined) row[k] = prof[k]; });
+    return q('businesses?id=eq.' + encodeURIComponent(s.businessId), { method: 'PATCH', body: JSON.stringify(row) }).then(function () {
+      try { s.profile = Object.assign(s.profile || {}, prof); localStorage.setItem('lyl_session', JSON.stringify(s)); } catch (e) {}
+    });
+  }
   function bizInfo(bid) {
     return q('businesses?id=eq.' + encodeURIComponent(bid) + '&select=id,name').then(function (rows) {
       if (!(rows && rows[0])) throw new Error('Unknown business QR.');
@@ -138,5 +150,5 @@
       return q('messages', { method: 'POST', body: JSON.stringify({ member_id: mid, text: 'Welcome to LoyalUp! Show your QR at the store.' }) }).catch(function () {});
     }).then(function () { return { memberId: mid }; });
   }
-  w.Cloud = { enabled: enabled, login: login, signup: login, pull: pull, save: save, bizInfo: bizInfo, join: join };
+  w.Cloud = { enabled: enabled, login: login, signup: login, pull: pull, save: save, updateProfile: updateProfile, bizInfo: bizInfo, join: join };
 })(window);

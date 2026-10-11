@@ -9,6 +9,12 @@ create table if not exists businesses (
   id text primary key,
   name text unique not null,
   pw text not null default '',
+  city text default '',
+  size text default '',
+  btype text default '',
+  lat double precision default 0,
+  lng double precision default 0,
+  loc_label text default '',
   created_at timestamptz default now()
 );
 
