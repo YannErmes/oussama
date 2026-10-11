@@ -65,6 +65,8 @@ window.addEventListener('DOMContentLoaded', function () {
       if (window.QRCode) new QRCode(el, { text: payload, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
       else el.innerHTML = '<div class="promo">' + id + '</div>';
       document.getElementById('jWallet').onclick = function () {
+        var done = function (url) { window.open(url, '_blank'); };
+        if (window.Loy && Loy.getWalletSaveURL) { Loy.getWalletSaveURL(id, bid).then(done).catch(function () { done('https://pay.google.com/gp/v/save/DEMO.' + btoa(id).replace(/=+$/, '')); }); return; }
         var wurl = useCloud()
           ? '/.netlify/functions/wallet-jwt?b=' + encodeURIComponent(bid) + '&member=' + encodeURIComponent(id)
           : '/api/public/wallet/jwt?b=' + encodeURIComponent(bid) + '&member=' + encodeURIComponent(id);

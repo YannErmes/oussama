@@ -35,14 +35,16 @@ against `loyal.db` (SQLite). Nothing else to install.
 
 ## 2. [YOU] Put the site online (free, 5 minutes)
 
-Option A — Netlify (wallet function included):
-1. Go to https://app.netlify.com/drop → drag the whole project folder.
-2. You get `https://your-site.netlify.app` — done, site is online.
-3. Site settings → Environment variables → add later (step 3):
+Option A — Vercel (recommended, routing + wallet function included):
+1. `vercel` in the folder (or Import Project on vercel.com) → you get
+   `https://your-site.vercel.app`. `vercel.json` already fixes clean URLs
+   (`/login`, `/dashboard`, `/pricing`…) so shared links open the right page.
+2. Project → Settings → Environment Variables → add later (step 3):
    `SERVICE_ACCOUNT_JSON`, `ISSUER_ID`, `SUPABASE_URL`, `SUPABASE_KEY`.
+   The wallet signer lives at `/api/wallet-jwt` (file `api/wallet-jwt.js`).
 
-Option B — Vercel: `vercel` in the folder (needs the serverless function
-ported — ask me and I'll do it).
+Option B — Netlify: drag the folder to https://app.netlify.com/drop
+(same wallet signer at `/.netlify/functions/wallet-jwt`).
 
 ## 3. [YOU] Google Wallet — the only real blocker
 

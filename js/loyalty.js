@@ -179,15 +179,20 @@
       return d;
     });
   }
-  function getWalletSaveURL(memberId) {
-    // Online serverless signer first (works on Netlify without Python backend)
-    var netlify = fetch('/.netlify/functions/wallet-jwt?b=' + encodeURIComponent(bizId()) + '&member=' + encodeURIComponent(memberId))
-      .then(function (r) { return r.json(); }).then(function (d) { if (!d.saveUrl) throw new Error('no-url'); return d.saveUrl; });
-    return netlify.catch(function () {
-      return api('/api/wallet/jwt?member=' + encodeURIComponent(memberId))
-        .then(function (d) { return d.saveUrl; })
-        .catch(function () { var m = getMember(memberId); return googleWalletSaveURL(m || { id: memberId }); });
-    });
+  function getWalletSaveURL(memberId, bidOverride) {
+    var b = bidOverride || bizId();
+    function tryUrl(u) {
+      return fetch(u).then(function (r) { return r.json(); }).then(function (d) { if (!d.saveUrl) throw new Error('no-url'); return d.saveUrl; });
+    }
+    // Online serverless signers first (Vercel + Netlify, no Python backend needed)
+    var qs = '?b=' + encodeURIComponent(b) + '&member=' + encodeURIComponent(memberId);
+    return tryUrl('/api/wallet-jwt' + qs)
+      .catch(function () { return tryUrl('/.netlify/functions/wallet-jwt' + qs); })
+      .catch(function () {
+        return api('/api/wallet/jwt?member=' + encodeURIComponent(memberId))
+          .then(function (d) { return d.saveUrl; })
+          .catch(function () { var m = getMember(memberId); return googleWalletSaveURL(m || { id: memberId }); });
+      });
   }
 
   w.Loy = { getSession: getSession, login: login, signup: signup, logout: logout, requireSession: requireSession,

@@ -70,7 +70,8 @@ h1 span{color:var(--green)}
 .stamp.fill{background:var(--mint);border-style:solid}
 .progress{background:var(--green);color:#fff;text-align:center;border-radius:10px;padding:10px;font-size:12px;font-weight:800}
 .qr-card{position:absolute;right:22%;bottom:44px;background:#fff;border:1px solid #e2ece7;border-radius:12px;padding:12px;width:132px;text-align:center;z-index:4;box-shadow:0 12px 30px rgba(0,0,0,.12)}
-.qr{width:72px;height:72px;margin:8px auto;background:repeating-linear-gradient(0deg,#111 0 4px,#fff 4px 8px),repeating-linear-gradient(90deg,#111 0 4px,#fff 4px 8px);background-blend-mode:multiply;border:6px solid #fff;outline:1px solid #ddd}
+.qr{width:96px;height:96px;margin:8px auto;background:#fff;padding:4px;border-radius:8px;border:1px solid #e2ece7}
+.qr img,.qr canvas,.qr table{width:100%!important;height:100%!important;display:block;margin:0!important;padding:0!important;border:0!important}
 .wallet-row{position:absolute;bottom:12px;right:12px;display:flex;gap:8px;z-index:4}
 .wallet{background:#fff;border:1px solid #e2ece7;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
 /* ---------- PHONES SWAP (smooth, GPU only) ---------- */

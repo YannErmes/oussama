@@ -37,6 +37,21 @@ function toggleMenu() { var l = document.querySelector('.links'); if (!l) return
     else if (joinLink) joinLink.innerHTML = '<a href="login.html" style="color:var(--green);font-weight:800">Log in as a business to get YOUR QR code →</a>';
   }
   paintBizQR();
+  // Hero "Scan & Get Rewarded" card: real scannable QR (business join link when logged in, demo link otherwise)
+  (function paintHeroQR(tries) {
+    var h = document.getElementById('heroQR');
+    if (!h || !window.Loy) return;
+    if (!window.QRCode && (tries || 0) < 20) { setTimeout(function () { paintHeroQR((tries || 0) + 1); }, 250); return; }
+    var s = Loy.getSession && Loy.getSession();
+    try { Loy.drawQR(h, s ? Loy.businessJoinURL() : h.getAttribute('data-qr'), 96); } catch (e) {}
+  })(0);
+  window.addEventListener('load', function () {
+    var h = document.getElementById('heroQR');
+    if (h && window.Loy && h.children.length === 0) {
+      var s = Loy.getSession && Loy.getSession();
+      try { Loy.drawQR(h, s ? Loy.businessJoinURL() : h.getAttribute('data-qr'), 96); } catch (e) {}
+    }
+  });
   // Pull this business's shared DB state on load (server authoritative when logged in)
   if (window.Loy && Loy.pullFromServer && Loy.getSession()) Loy.pullFromServer().then(function () { paintBizQR(); }).catch(function () {});
   var create = $('createMember'), nameI = $('memberName'), mCard = $('memberCard');
