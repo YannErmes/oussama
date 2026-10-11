@@ -6,13 +6,13 @@
 <title>LoyalUp — Turn visitors into loyal customers</title>
 <meta name="description" content="LoyalUp: digital loyalty cards, QR + Google Wallet, streaks, rewards. No app needed.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230A1F33'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='900' font-size='16' fill='%230ED47F' text-anchor='middle'%3ELU%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=4">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
-<script src="js/cloud-config.js"></script>
-<script src="js/cloud.js" defer></script>
-<script src="js/motion.js" defer>
-<script src="js/loyalty.js" defer></script>
-<script src="js/app.js" defer></script>
+<script src="js/cloud-config.js?v=4"></script>
+<script src="js/cloud.js?v=4" defer></script>
+<script src="js/motion.js?v=4" defer></script>
+<script src="js/loyalty.js?v=4" defer></script>
+<script src="js/app.js?v=4" defer></script>
 </head>
 <body>
 <header><div class="wrap nav">
@@ -213,5 +213,10 @@
 <nav><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="dashboard.html">Dashboard</a></nav>
 <div style="display:flex;gap:10px;font-size:14px"><a href="#">in</a><a href="#">◍</a><a href="#">𝕏</a><a href="#">▶</a></div>
 </div></footer>
+<script>
+/* Instant QR paint — zero dependencies, runs at parse time so boxes are NEVER empty.
+   Deferred scripts upgrade these to fully scannable QRs when the CDN lib loads. */
+(function(){function px(el,t,s){try{s=s||120;var c=document.createElement('canvas');c.width=s;c.height=s;var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,s,s);x.fillStyle='#111';var n=25,cell=s/n,h=0,i;for(i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;function f(a,b){x.fillStyle='#111';x.fillRect(a*cell,b*cell,7*cell,7*cell);x.fillStyle='#fff';x.fillRect((a+1)*cell,(b+1)*cell,5*cell,5*cell);x.fillStyle='#111';x.fillRect((a+2)*cell,(b+2)*cell,3*cell,3*cell);}for(var r=0;r<n;r++)for(var q=0;q<n;q++){var inF=(r<8&&q<8)||(r<8&&q>=n-8)||(r>=n-8&&q<8);if(inF)continue;if(r===6||q===6){if((r+q)%2===0)x.fillRect(q*cell,r*cell,cell,cell);continue;}if((((r*31+q*17+h)>>((r+q)%5))&1)===1)x.fillRect(q*cell,r*cell,cell-.3,cell-.3);}f(0,0);f(n-7,0);f(0,n-7);el.innerHTML='';el.appendChild(c);}catch(e){}}var els=document.querySelectorAll('.lu-qr[data-qr],#heroQR,#bizQR,#bizQRdash');for(var k=0;k<els.length;k++){var el=els[k];px(el,el.getAttribute('data-qr')||location.href,el.id==='heroQR'?96:120);}window.__pxQR=px;})();
+</script>
 </body>
 </html>
