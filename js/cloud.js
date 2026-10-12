@@ -47,10 +47,18 @@
         return sha256(id + '::' + password).then(function (h) {
           var row = { id: id, name: name, pw: h, city: profile.city || '', size: profile.size || '',
             btype: profile.btype || '', lat: profile.lat || 0, lng: profile.lng || 0, loc_label: profile.loc_label || '' };
-          return q('businesses', { method: 'POST', headers: Object.assign(H(true), { Prefer: 'return=representation' }),
-            body: JSON.stringify(row) }).then(function (rows) {
+          function created(rows) {
             var nb = (rows && rows[0]) || { id: id, name: name };
             return seed(id).then(function () { sess(nb); return pull().then(function () { return { business: nb }; }); });
+          }
+          return q('businesses', { method: 'POST', headers: Object.assign(H(true), { Prefer: 'return=representation' }),
+            body: JSON.stringify(row) }).then(created, function (err) {
+            // Schema not upgraded yet (run supabase/schema.sql)? retry with base columns.
+            if (String((err && err.message) || err).indexOf('schema cache') >= 0) {
+              return q('businesses', { method: 'POST', headers: Object.assign(H(true), { Prefer: 'return=representation' }),
+                body: JSON.stringify({ id: id, name: name, pw: h }) }).then(created);
+            }
+            throw err;
           });
         });
       }
