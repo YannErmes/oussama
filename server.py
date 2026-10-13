@@ -26,6 +26,10 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(ROOT, "loyal.db")
 SA_FILE = os.path.join(ROOT, "service-account.json")
 PORT = 8000
+# Founder (SaaS owner) gate — fixed credentials, enforced server-side.
+# Entry lives silently on the normal login page; no hints anywhere.
+FOUNDER_NAME = os.environ.get("FOUNDER_NAME", "team")
+FOUNDER_PW = os.environ.get("FOUNDER_PASSWORD", "gguf")
 
 # ---------------- helpers ----------------
 def db():
@@ -70,6 +74,7 @@ def init_db():
          pw TEXT, city TEXT DEFAULT '', size TEXT DEFAULT '', btype TEXT DEFAULT '',
          lat REAL DEFAULT 0, lng REAL DEFAULT 0, loc_label TEXT DEFAULT '', createdAt TEXT)""")
     e("""CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, businessId TEXT, createdAt TEXT)""")
+    e("""CREATE TABLE IF NOT EXISTS ftotokens(token TEXT PRIMARY KEY, createdAt TEXT)""")
     e("""CREATE TABLE IF NOT EXISTS members(id TEXT PRIMARY KEY, businessId TEXT, name TEXT,
          phone TEXT DEFAULT '', visits INT DEFAULT 0, stamps INT DEFAULT 0, points INT DEFAULT 0,
          streak INT DEFAULT 0, lastVisit TEXT, walletAdded INT DEFAULT 0,
@@ -317,8 +322,50 @@ class Handler(SimpleHTTPRequestHandler):
         c.close()
         return biz_public(b) if b else None
 
+    def _fauth(self):
+        h = self.headers.get("X-Founder") or ""
+        if not h:
+            return False
+        c = db()
+        ok = c.execute("SELECT 1 FROM ftotokens WHERE token=?", (h,)).fetchone()
+        c.close()
+        return bool(ok)
+
     def do_GET(self):
         u = urlparse(self.path)
+        if u.path == "/api/admin/overview":
+            if not self._fauth():
+                return self._json({"error": "founder login required"}, 401)
+            c = db()
+            rows = c.execute("""SELECT b.*,
+                (SELECT COUNT(*) FROM members m WHERE m.businessId=b.id) AS customers,
+                (SELECT COALESCE(SUM(m.visits),0) FROM members m WHERE m.businessId=b.id) AS visits,
+                (SELECT COALESCE(SUM(m.points),0) FROM members m WHERE m.businessId=b.id) AS points,
+                (SELECT COALESCE(MAX(m.streak),0) FROM members m WHERE m.businessId=b.id) AS best_streak,
+                (SELECT COUNT(*) FROM promos p WHERE p.businessId=b.id) AS promos,
+                (SELECT COUNT(*) FROM rewards r WHERE r.businessId=b.id) AS rewards
+                FROM businesses b ORDER BY b.createdAt DESC""").fetchall()
+            out = []
+            for r in rows:
+                d = dict(r); d.pop("pw", None)
+                out.append(d)
+            tot = {"businesses": len(out), "customers": sum(x["customers"] for x in out),
+                   "visits": sum(x["visits"] for x in out), "points": sum(x["points"] for x in out)}
+            c.close()
+            return self._json({"businesses": out, "totals": tot})
+        if u.path == "/api/admin/business":
+            if not self._fauth():
+                return self._json({"error": "founder login required"}, 401)
+            bid = parse_qs(u.query).get("bid", [""])[0]
+            c = db()
+            b = c.execute("SELECT * FROM businesses WHERE id=?", (bid,)).fetchone()
+            if not b:
+                c.close(); return self._json({"error": "Unknown business."}, 404)
+            members = [dict(r) for r in c.execute(
+                "SELECT id,name,phone,visits,stamps,points,streak,lastVisit,walletAdded,createdAt FROM members WHERE businessId=? ORDER BY createdAt DESC", (bid,)).fetchall()]
+            c.close()
+            d = dict(b); d.pop("pw", None)
+            return self._json({"business": d, "members": members})
         if u.path == "/api/health":
             c = db()
             nb = c.execute("SELECT COUNT(*) v FROM businesses").fetchone()["v"]
@@ -364,6 +411,16 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         u = urlparse(self.path); d = self._body()
+        if u.path == "/api/admin/login":
+            nm = (d.get("name") or "").strip().lower()
+            pw = d.get("password") or ""
+            if nm != FOUNDER_NAME.lower() or pw != FOUNDER_PW:
+                return self._json({"error": "Invalid credentials."}, 403)
+            tok = secrets.token_urlsafe(32)
+            c = db()
+            c.execute("INSERT INTO ftotokens VALUES(?,?)", (tok, now_iso()))
+            c.commit(); c.close()
+            return self._json({"token": tok})
         if u.path in ("/api/auth/signup", "/api/auth/login"):
             name = (d.get("businessName") or "").strip()
             pw = d.get("password") or ""

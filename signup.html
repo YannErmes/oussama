@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoyalUp — Create your business account</title>
+<link rel="stylesheet" href="css/style.css?v=5">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="js/cloud-config.js?v=5"></script>
+<script src="js/cloud.js?v=5" defer></script>
+<script src="js/loyalty.js?v=5" defer></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<style>
+.login-wrap{min-height:calc(100vh - 64px);display:flex;align-items:flex-start;justify-content:center;background:#F5FBF8;padding:24px}
+.login-card{max-width:560px;width:100%;padding:28px}
+.err{background:#FDECEC;border:1px solid #f5c2c2;color:#a33;border-radius:10px;padding:10px;font-size:13px;display:none;margin-top:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#map{height:230px;border-radius:12px;border:1px solid #d7e2dc;z-index:1}
+.map-hint{font-size:11.5px;color:#5b6b7f;margin-top:6px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap nav">
+<a class="logo" href="index.html"><span class="l">Loyal</span><span class="u">Up</span></a>
+<div class="nav-right"><a class="login" href="login.html">Already registered? Log in</a></div>
+</div></header>
+<div class="login-wrap">
+<div class="card login-card">
+<div class="eyebrow">For businesses</div>
+<h2>Create your account</h2>
+<p class="muted" style="font-size:13px">Fill this once — your own dashboard + QR code are created instantly. You stay logged in on this browser.</p>
+<div class="two">
+<div class="field"><label>Business name *</label><input id="bizName" class="input" placeholder="e.g. Café Atlas" autocomplete="organization"></div>
+<div class="field"><label>Password *</label><input id="bizPw" class="input" type="password" placeholder="••••••••" autocomplete="new-password"></div>
+</div>
+<div class="two">
+<div class="field"><label>City (Morocco)</label><select id="bizCity" class="input">
+<option value="">Select city…</option>
+<option>Casablanca</option><option>Rabat</option><option>Salé</option><option>Témara</option>
+<option>Marrakech</option><option>Fès</option><option>Meknès</option><option>Tangier</option>
+<option>Tetouan</option><option>Agadir</option><option>Oujda</option><option>Kenitra</option>
+<option>Mohammedia</option><option>El Jadida</option><option>Nador</option><option>Béni Mellal</option>
+<option>Khouribga</option><option>Laayoune</option><option>Dakhla</option><option>Essaouira</option>
+<option>Other</option>
+</select></div>
+<div class="field"><label>Business size</label><select id="bizSize" class="input">
+<option value="">Select size…</option>
+<option value="1">Just me (1 person)</option>
+<option value="2-5">2 – 5 people</option>
+<option value="6-20">6 – 20 people</option>
+<option value="20+">20+ people</option>
+</select></div>
+</div>
+<div class="two">
+<div class="field"><label>Business type</label><select id="bizType" class="input">
+<option value="">Select type…</option>
+<option>Barbershop</option><option>Salon & Spa</option><option>Café & Restaurant</option>
+<option>Retail Store</option><option>Fitness & Wellness</option><option>Services</option>
+<option value="Other">Other (type it below)</option>
+</select></div>
+<div class="field"><label>Custom type (if Other)</label><input id="bizTypeCustom" class="input" placeholder="e.g. Car wash"></div>
+</div>
+<div class="field"><label>Location — tap your spot on the map</label><div id="map"></div>
+<div class="map-hint">📍 <span id="locLabel">No pin yet — tap the map or use my location.</span> <a href="#" id="useGeo" style="color:var(--green);font-weight:700">Use my location</a></div></div>
+<div class="row" style="margin-top:6px"><button id="doSignup" class="btn" style="flex:1;justify-content:center">Create my dashboard →</button></div>
+<div id="loginErr" class="err"></div>
+<p class="muted" style="font-size:12.5px;margin-top:12px">Already have an account? <a href="login.html" style="color:var(--green);font-weight:800">Log in →</a></p>
+</div>
+</div>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  var n = document.getElementById('bizName'), p = document.getElementById('bizPw'), e = document.getElementById('loginErr');
+  var pin = null, marker = null, map = null;
+  function initMap() {
+    if (!window.L || map) return;
+    map = L.map('map').setView([31.7917, -7.0926], 6);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+    map.on('click', function (ev) { setPin(ev.latlng.lat, ev.latlng.lng, 'Pin on map'); });
+  }
+  function setPin(lat, lng, label) {
+    pin = { lat: +lat.toFixed(5), lng: +lng.toFixed(5) };
+    document.getElementById('locLabel').textContent = label + ' (' + pin.lat + ', ' + pin.lng + ')';
+    if (map) { if (marker) marker.setLatLng([pin.lat, pin.lng]); else marker = L.marker([pin.lat, pin.lng]).addTo(map); map.setView([pin.lat, pin.lng], 13); }
+  }
+  var tries = 0, iv = setInterval(function () { if (window.L) { initMap(); clearInterval(iv); } else if (++tries > 40) clearInterval(iv); }, 250);
+  window.addEventListener('load', initMap);
+  document.getElementById('useGeo').addEventListener('click', function (ev) {
+    ev.preventDefault();
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function (pos) { setPin(pos.coords.latitude, pos.coords.longitude, 'My location'); });
+  });
+  if (window.Loy && Loy.getSession()) { location.href = 'dashboard.html'; return; }
+  function profile() {
+    var t = document.getElementById('bizType').value;
+    if (t === 'Other') t = (document.getElementById('bizTypeCustom').value || '').trim() || 'Other';
+    return { city: document.getElementById('bizCity').value, size: document.getElementById('bizSize').value,
+      btype: t, lat: pin ? pin.lat : 0, lng: pin ? pin.lng : 0,
+      loc_label: pin ? document.getElementById('locLabel').textContent : '' };
+  }
+  function go() {
+    e.style.display = 'none';
+    if (!n.value.trim() || !p.value) { e.textContent = 'Business name + password required.'; e.style.display = 'block'; return; }
+    document.getElementById('doSignup').textContent = 'Creating dashboard…';
+    Loy.signup(n.value.trim(), p.value, profile()).then(function () { location.href = 'dashboard.html'; })
+      .catch(function (err) { e.textContent = err.message || 'Signup failed.'; e.style.display = 'block'; document.getElementById('doSignup').textContent = 'Create my dashboard →'; });
+  }
+  document.getElementById('doSignup').addEventListener('click', go);
+  p.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') go(); });
+});
+</script>
+</body>
+</html>

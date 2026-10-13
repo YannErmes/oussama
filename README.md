@@ -63,7 +63,7 @@ Option B — Netlify: drag the folder to https://app.netlify.com/drop
 
 ## 4. [YOU] Test flight (after 1–3 are done)
 
-- [ ] Business registers at `/login.html` → dashboard opens with its own QR
+- [ ] Business registers at `/signup.html` → dashboard opens with its own QR
 - [ ] Phone scans business QR → `/join.html?b=...` → customer card created
 - [ ] "Add to Google Wallet" → real pass appears (mode: live)
 - [ ] Dashboard Scan station → +1 tampon, streak grows
@@ -73,7 +73,9 @@ Option B — Netlify: drag the folder to https://app.netlify.com/drop
 ## 5. Project map (where everything lives)
 
 - `index.html` — landing + live demo + per-business QR section
-- `login.html` — business register/login (name + password)
+- `login.html` — business login (name + password only, stays logged in)
+- `signup.html` — business registration (city, size, type, map location)
+- `admin.html` — founder command center (all businesses, founder password)
 - `dashboard.html` — guarded per-business dashboard (login required)
 - `join.html?b=ID` — customer join page (encoded in each business QR)
 - `css/style.css` — all styles, one file (~19KB, fast)
@@ -85,7 +87,14 @@ Option B — Netlify: drag the folder to https://app.netlify.com/drop
 - `supabase/schema.sql` — online DB schema (run once in Supabase)
 - `netlify.toml` + `netlify/functions/wallet-jwt.js` — deploy + wallet signer
 
-## 6. What to send me (nothing else needed)
+## 6. Founder access (SaaS owner)
+
+- The founder entry is hidden in plain sight on the normal login page —
+  you know the trick, nobody else sees a hint anywhere.
+- Open `/admin.html` directly any time to use the command center
+  (requires the hidden session; otherwise it quietly returns to login).
+
+## 7. What to send me (nothing else needed)
 
 1. Supabase Project URL + anon key
 2. Google Issuer ID

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoyalUp — Founder dashboard</title>
+<link rel="stylesheet" href="css/style.css?v=5">
+<style>
+.found-wrap{max-width:1080px;margin:0 auto;padding:28px 20px}
+.found-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.found-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+.found-table th,.found-table td{text-align:left;padding:10px;border-bottom:1px solid #eef3f0}
+.found-table tr[data-bid]{cursor:pointer}
+.found-table tr[data-bid]:hover{background:#F2FBF6}
+.err{background:#FDECEC;border:1px solid #f5c2c2;color:#a33;border-radius:10px;padding:10px;font-size:13px;display:none;margin-top:10px}
+@media(max-width:700px){.found-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap nav">
+<a class="logo" href="index.html"><span class="l">Loyal</span><span class="u">Up</span></a>
+<div class="nav-right"><a class="login" href="#" id="fLogout" style="display:none">Logout</a></div>
+</div></header>
+<div class="found-wrap" id="dash" style="display:none">
+<div class="row" style="justify-content:space-between"><div><div class="eyebrow">Command center</div><h2>All businesses</h2></div><input id="fSearch" class="input" style="max-width:260px" placeholder="🔍 Search business…"></div>
+<div class="found-grid">
+<div class="db-stat">Businesses<strong id="tBiz">0</strong></div>
+<div class="db-stat">Total Customers<strong id="tCust">0</strong></div>
+<div class="db-stat">Total Visits<strong id="tVis">0</strong></div>
+<div class="db-stat">Points Issued<strong id="tPts">0</strong></div>
+</div>
+<div class="card" style="padding:6px 14px;overflow:auto">
+<table class="found-table"><thead><tr><th>Business</th><th>City / Type</th><th>Customers</th><th>Visits</th><th>Best streak</th><th>Since</th></tr></thead><tbody id="bizRows"></tbody></table>
+</div>
+<div class="card db-panel" id="detail" style="display:none;padding:16px">
+<h3 id="dName">Business</h3><div id="dMeta" class="muted" style="font-size:12px"></div>
+<table class="found-table" style="margin-top:10px"><thead><tr><th>Customer</th><th>Visits</th><th>Stamps</th><th>Points</th><th>Streak</th><th>Last visit</th></tr></thead><tbody id="dRows"></tbody></table>
+</div>
+</div>
+<script>
+(function(){
+  function tok(){ try{return JSON.parse(localStorage.getItem('lyl_founder')||'null');}catch(e){return null;} }
+  var dash=document.getElementById('dash');
+  function show(){ if(!tok()){location.href='login.html';return;} dash.style.display='block';document.getElementById('fLogout').style.display='';load(); }
+  document.getElementById('fLogout').addEventListener('click',function(ev){ev.preventDefault();localStorage.removeItem('lyl_founder');location.reload();});
+  var cache=[];
+  function load(){
+    fetch('/api/admin/overview',{headers:{'X-Founder':tok()}}).then(function(r){return r.json();}).then(function(d){
+      if(d.error)throw new Error(d.error);
+      cache=d.businesses||[];
+      document.getElementById('tBiz').textContent=d.totals.businesses;
+      document.getElementById('tCust').textContent=d.totals.customers;
+      document.getElementById('tVis').textContent=d.totals.visits;
+      document.getElementById('tPts').textContent=d.totals.points;
+      render('');
+    }).catch(function(){localStorage.removeItem('lyl_founder');location.href='login.html';});
+  }
+  function render(f){
+    f=(f||'').toLowerCase();
+    document.getElementById('bizRows').innerHTML=cache.filter(function(b){return (b.name+' '+(b.city||'')+' '+(b.btype||'')).toLowerCase().indexOf(f)>=0;}).map(function(b){
+      return '<tr data-bid="'+b.id+'"><td><b>'+b.name+'</b><br><small>'+b.id+'</small></td><td>'+(b.city||'—')+' · '+(b.btype||'—')+'</td><td><b>'+b.customers+'</b></td><td>'+b.visits+'</td><td>🔥 '+b.best_streak+'</td><td>'+(b.createdAt||'').slice(0,10)+'</td></tr>';
+    }).join('')||'<tr><td colspan="6">No businesses yet.</td></tr>';
+    Array.prototype.forEach.call(document.querySelectorAll('tr[data-bid]'),function(tr){tr.addEventListener('click',function(){detail(tr.getAttribute('data-bid'));});});
+  }
+  document.getElementById('fSearch').addEventListener('input',function(ev){render(ev.target.value);});
+  function detail(bid){
+    fetch('/api/admin/business?bid='+encodeURIComponent(bid),{headers:{'X-Founder':tok()}}).then(function(r){return r.json();}).then(function(d){
+      var box=document.getElementById('detail');box.style.display='block';
+      document.getElementById('dName').textContent=d.business.name;
+      document.getElementById('dMeta').textContent=(d.business.city||'')+' · '+(d.business.btype||'')+' · '+(d.business.size||'')+' · '+d.members.length+' customers';
+      document.getElementById('dRows').innerHTML=d.members.map(function(m){return '<tr><td><b>'+m.name+'</b><br><small>'+m.id+'</small></td><td>'+m.visits+'</td><td>'+m.stamps+'/10</td><td>'+m.points+'</td><td>🔥 '+m.streak+'</td><td>'+((m.lastVisit||'').slice(0,10)||'—')+'</td></tr>';}).join('')||'<tr><td colspan="6">No customers yet.</td></tr>';
+      box.scrollIntoView({behavior:'smooth'});
+    });
+  }
+  show();
+})();
+</script>
+</body>
+</html>
