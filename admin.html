@@ -44,6 +44,12 @@
   function tok(){ try{return JSON.parse(localStorage.getItem('lyl_founder')||'null');}catch(e){return null;} }
   var dash=document.getElementById('dash');
   function show(){ if(!tok()){location.href='login.html';return;} dash.style.display='block';document.getElementById('fLogout').style.display='';load(); }
+  // deferred cloud.js may not be parsed yet when this classic script runs — wait for it
+  var _tries = 0;
+  (function _ready(){
+    if (window.Cloud || ++_tries > 60) show();
+    else setTimeout(_ready, 100);
+  })();
   document.getElementById('fLogout').addEventListener('click',function(ev){ev.preventDefault();localStorage.removeItem('lyl_founder');location.reload();});
   var cache=[];
   function useCloud(){return window.Cloud&&Cloud.enabled&&Cloud.enabled();}
@@ -85,7 +91,6 @@
     if(useCloud()){Cloud.adminBusiness(bid).then(done).catch(function(){});return;}
     fetch('/api/admin/business?bid='+encodeURIComponent(bid),{headers:{'X-Founder':tok()}}).then(safeJson).then(done).catch(function(){});
   }
-  show();
 })();
 </script>
 </body>
