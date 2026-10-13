@@ -44,7 +44,7 @@
       if (prof.btype) $('profType').value = prof.btype;
     }
   }
-  $('addCust').addEventListener('click', function () { var n = $('newCustName').value.trim() || 'oussama bouqontar'; Loy.createMember(n); $('newCustName').value = ''; refresh(); });
+  $('addCust').addEventListener('click', function () { var n = $('newCustName').value.trim() || 'Salma B.'; Loy.createMember(n); $('newCustName').value = ''; refresh(); });
   $('addReward').addEventListener('click', function () {
     var name = $('rwName').value.trim() || 'Free item'; var cost = parseInt($('rwCost').value, 10) || 10;
     var r = Loy.getRewards(); r.push({ id: 'r' + Date.now(), name: name, cost: cost, active: true });

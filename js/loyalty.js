@@ -74,7 +74,7 @@
 
   function createMember(name) {
     var list = getMembers();
-    var m = { id: uid('LYL'), name: name || 'oussama bouqontar', visits: 0, stamps: 0, points: 0, streak: 0, lastVisit: null, walletAdded: false, messages: ['Welcome to LoyalUp! Show your QR at the store.'] };
+    var m = { id: uid('LYL'), name: name || 'Salma B.', visits: 0, stamps: 0, points: 0, streak: 0, lastVisit: null, walletAdded: false, messages: ['Welcome to LoyalUp! Show your QR at the store.'] };
     list.push(m); saveMembers(list); pushLog('JOIN ' + m.name + ' (' + m.id + ')');
     pushState();
     return m;
@@ -97,7 +97,7 @@
     m.visits++; m.stamps += stamps; m.points += pts; m.streak++;
     m.lastVisit = now.toISOString();
     var reward = null;
-    if (m.stamps >= 10) { m.stamps -= 10; reward = 'Reward unlocked (free item)'; m.messages.push('Récompense débloquée — show this to redeem!'); }
+    if (m.stamps >= 10) { m.stamps -= 10; reward = 'Reward unlocked (free item)'; m.messages.push('Récompense débloquée — show this to claim your reward!'); }
     m.messages.push('+1 tampon — Visite validée (' + m.visits + ')');
     saveMembers(list); pushLog('SCAN ' + m.name + ' +' + pts + 'pts, streak ' + m.streak);
     pushState();

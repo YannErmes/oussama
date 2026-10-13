@@ -56,7 +56,7 @@ function toggleMenu() { var l = document.querySelector('.links'); if (!l) return
   if (window.Loy && Loy.pullFromServer && Loy.getSession()) Loy.pullFromServer().then(function () { paintBizQR(); }).catch(function () {});
   var create = $('createMember'), nameI = $('memberName'), mCard = $('memberCard');
   if (create) create.addEventListener('click', function () {
-    var m = Loy.createMember((nameI && nameI.value.trim()) || 'oussama bouqontar');
+    var m = Loy.createMember((nameI && nameI.value.trim()) || 'Salma B.');
     mCard.classList.add('show');
     $('mName').textContent = m.name; $('mId').textContent = m.id;
     Loy.drawQR($('memberQR'), Loy.memberURL(m));

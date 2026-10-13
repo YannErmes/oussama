@@ -153,7 +153,7 @@ def get_or_create_business(c, name, pw, profile=None, silent=False):
 
 def seed_business(c, bid):
     for name, visits, stamps, points, streak in [
-            ("oussama bouqontar", 8, 8, 90, 6), ("Rihab", 5, 5, 50, 3), ("Yassine", 9, 9, 110, 7)]:
+            ("Salma B.", 8, 8, 90, 6), ("Rihab", 5, 5, 50, 3), ("Yassine", 9, 9, 110, 7)]:
         mid = new_id()
         c.execute("""INSERT INTO members(id,businessId,name,visits,stamps,points,streak,lastVisit,walletAdded,createdAt)
                      VALUES(?,?,?,?,?,?,?,?,?,?)""",
@@ -241,7 +241,7 @@ def do_scan(bid, member_id, force=False):
     if nstamps >= 10:
         nstamps -= 10; reward = "Reward unlocked (free item)"
         c.execute("INSERT INTO messages(memberId,text,createdAt) VALUES(?,?,?)",
-                  (member_id, "Récompense débloquée — show this to redeem!", now_iso()))
+                  (member_id, "Récompense débloquée — show this to claim your reward!", now_iso()))
     c.execute("UPDATE members SET visits=?,stamps=?,points=?,streak=?,lastVisit=? WHERE id=?",
               (visits, nstamps, npoints, streak, now_iso(), member_id))
     c.execute("INSERT INTO messages(memberId,text,createdAt) VALUES(?,?,?)",
