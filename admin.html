@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LoyalUp — Founder dashboard</title>
 <link rel="stylesheet" href="css/style.css?v=5">
+<script src="js/cloud-config.js?v=5"></script>
+<script src="js/cloud.js?v=5" defer></script>
 <style>
 .found-wrap{max-width:1080px;margin:0 auto;padding:28px 20px}
 .found-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
@@ -44,8 +46,10 @@
   function show(){ if(!tok()){location.href='login.html';return;} dash.style.display='block';document.getElementById('fLogout').style.display='';load(); }
   document.getElementById('fLogout').addEventListener('click',function(ev){ev.preventDefault();localStorage.removeItem('lyl_founder');location.reload();});
   var cache=[];
+  function useCloud(){return window.Cloud&&Cloud.enabled&&Cloud.enabled();}
+  function safeJson(r){return r.text().then(function(t){var d;try{d=JSON.parse(t);}catch(e){throw new Error('Server not reachable (HTTP '+r.status+').');}return d;});}
   function load(){
-    fetch('/api/admin/overview',{headers:{'X-Founder':tok()}}).then(function(r){return r.json();}).then(function(d){
+    function done(d){
       if(d.error)throw new Error(d.error);
       cache=d.businesses||[];
       document.getElementById('tBiz').textContent=d.totals.businesses;
@@ -53,7 +57,10 @@
       document.getElementById('tVis').textContent=d.totals.visits;
       document.getElementById('tPts').textContent=d.totals.points;
       render('');
-    }).catch(function(){localStorage.removeItem('lyl_founder');location.href='login.html';});
+    }
+    if(useCloud()){Cloud.adminOverview().then(done).catch(function(){localStorage.removeItem('lyl_founder');location.href='login.html';});return;}
+    fetch('/api/admin/overview',{headers:{'X-Founder':tok()}}).then(safeJson).then(done)
+    .catch(function(){localStorage.removeItem('lyl_founder');location.href='login.html';});
   }
   function render(f){
     f=(f||'').toLowerCase();
@@ -64,13 +71,15 @@
   }
   document.getElementById('fSearch').addEventListener('input',function(ev){render(ev.target.value);});
   function detail(bid){
-    fetch('/api/admin/business?bid='+encodeURIComponent(bid),{headers:{'X-Founder':tok()}}).then(function(r){return r.json();}).then(function(d){
+    function done(d){
       var box=document.getElementById('detail');box.style.display='block';
       document.getElementById('dName').textContent=d.business.name;
       document.getElementById('dMeta').textContent=(d.business.city||'')+' · '+(d.business.btype||'')+' · '+(d.business.size||'')+' · '+d.members.length+' customers';
       document.getElementById('dRows').innerHTML=d.members.map(function(m){return '<tr><td><b>'+m.name+'</b><br><small>'+m.id+'</small></td><td>'+m.visits+'</td><td>'+m.stamps+'/10</td><td>'+m.points+'</td><td>🔥 '+m.streak+'</td><td>'+((m.lastVisit||'').slice(0,10)||'—')+'</td></tr>';}).join('')||'<tr><td colspan="6">No customers yet.</td></tr>';
       box.scrollIntoView({behavior:'smooth'});
-    });
+    }
+    if(useCloud()){Cloud.adminBusiness(bid).then(done).catch(function(){});return;}
+    fetch('/api/admin/business?bid='+encodeURIComponent(bid),{headers:{'X-Founder':tok()}}).then(safeJson).then(done).catch(function(){});
   }
   show();
 })();

@@ -141,6 +141,37 @@
       try { s.profile = Object.assign(s.profile || {}, prof); localStorage.setItem('lyl_session', JSON.stringify(s)); } catch (e) {}
     });
   }
+  function adminOverview() {
+    return q('businesses?select=*&order=created_at.desc').then(function (biz) {
+      var bids = (biz || []).map(function (b) { return b.id; });
+      var memQ = bids.length ? q('members?business_id=in.(' + bids.join(',') + ')&select=id,business_id,visits,points,streak') : Promise.resolve([]);
+      var proQ = bids.length ? q('promos?business_id=in.(' + bids.join(',') + ')&select=id,business_id') : Promise.resolve([]);
+      var rewQ = bids.length ? q('rewards?business_id=in.(' + bids.join(',') + ')&select=id,business_id') : Promise.resolve([]);
+      return Promise.all([memQ, proQ, rewQ]).then(function (r) {
+        var agg = {};
+        bids.forEach(function (id) { agg[id] = { customers: 0, visits: 0, points: 0, best_streak: 0, promos: 0, rewards: 0 }; });
+        (r[0] || []).forEach(function (m) { var a = agg[m.business_id]; if (!a) return; a.customers++; a.visits += m.visits || 0; a.points += m.points || 0; if ((m.streak || 0) > a.best_streak) a.best_streak = m.streak; });
+        (r[1] || []).forEach(function (p) { if (agg[p.business_id]) agg[p.business_id].promos++; });
+        (r[2] || []).forEach(function (x) { if (agg[x.business_id]) agg[x.business_id].rewards++; });
+        var list = (biz || []).map(function (b) {
+          return Object.assign({ id: b.id, name: b.name, city: b.city || '', btype: b.btype || '', size: b.size || '', createdAt: b.created_at }, agg[b.id]);
+        });
+        var tot = { businesses: list.length, customers: 0, visits: 0, points: 0 };
+        list.forEach(function (x) { tot.customers += x.customers; tot.visits += x.visits; tot.points += x.points; });
+        return { businesses: list, totals: tot };
+      });
+    });
+  }
+  function adminBusiness(bid) {
+    return q('businesses?id=eq.' + encodeURIComponent(bid) + '&select=*').then(function (rows) {
+      if (!(rows && rows[0])) throw new Error('Unknown business.');
+      var b = rows[0];
+      return q('members?business_id=eq.' + encodeURIComponent(bid) + '&select=id,name,phone,visits,stamps,points,streak,last_visit&order=created_at.desc').then(function (ms) {
+        return { business: { id: b.id, name: b.name, city: b.city || '', btype: b.btype || '', size: b.size || '' },
+          members: (ms || []).map(function (m) { return { id: m.id, name: m.name, visits: m.visits, stamps: m.stamps, points: m.points, streak: m.streak, lastVisit: m.last_visit }; }) };
+      });
+    });
+  }
   function bizInfo(bid) {
     return q('businesses?id=eq.' + encodeURIComponent(bid) + '&select=id,name').then(function (rows) {
       if (!(rows && rows[0])) throw new Error('Unknown business QR.');
@@ -158,5 +189,5 @@
       return q('messages', { method: 'POST', body: JSON.stringify({ member_id: mid, text: 'Welcome to LoyalUp! Show your QR at the store.' }) }).catch(function () {});
     }).then(function () { return { memberId: mid }; });
   }
-  w.Cloud = { enabled: enabled, login: login, signup: login, pull: pull, save: save, updateProfile: updateProfile, bizInfo: bizInfo, join: join };
+  w.Cloud = { enabled: enabled, login: login, signup: login, pull: pull, save: save, updateProfile: updateProfile, adminOverview: adminOverview, adminBusiness: adminBusiness, bizInfo: bizInfo, join: join };
 })(window);

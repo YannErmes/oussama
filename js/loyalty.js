@@ -156,7 +156,13 @@
   function api(path, opts) {
     if (!HAS_API) return Promise.reject(new Error('no-backend'));
     opts = opts || {}; opts.headers = Object.assign({}, opts.headers || {}, authH());
-    return fetch(path, opts).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error((d && d.error) || r.status); return d; }); });
+    return fetch(path, opts).then(function (r) {
+      return r.text().then(function (t) {
+        var d; try { d = JSON.parse(t); } catch (e) { throw new Error('Server not reachable (HTTP ' + r.status + ').'); }
+        if (!r.ok) throw new Error((d && d.error) || r.status);
+        return d;
+      });
+    });
   }
   function pushState() {
     if (useCloud()) { try { Cloud.save({ members: getMembers(), promos: getPromos(), rewards: getRewards(), config: getCfg() }).catch(function () {}); } catch (e) {} return; }

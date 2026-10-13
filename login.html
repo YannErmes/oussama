@@ -38,8 +38,10 @@ window.addEventListener('DOMContentLoaded', function () {
     // silent founder path (no UI change, no hints)
     if (nm.toLowerCase() === 'team' && pw === 'gguf') {
       document.getElementById('doLogin').textContent = 'Opening dashboard…';
+      var authed = function () { try { localStorage.setItem('lyl_founder', JSON.stringify('cloud-founder')); } catch (ex) {} location.href = 'admin.html'; };
+      if (window.Cloud && Cloud.enabled && Cloud.enabled()) { authed(); return; } // online: no backend, gate is the secret itself
       fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: nm, password: pw }) })
-        .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Login failed'); return d; }); })
+        .then(function (r) { return r.text().then(function (t) { var d; try { d = JSON.parse(t); } catch (ex) { throw new Error('Server not reachable.'); } if (!r.ok) throw new Error(d.error || 'Login failed'); return d; }); })
         .then(function (d) { try { localStorage.setItem('lyl_founder', JSON.stringify(d.token)); } catch (ex) {} location.href = 'admin.html'; })
         .catch(function (err) { e.textContent = err.message || 'Login failed.'; e.style.display = 'block'; document.getElementById('doLogin').textContent = 'Log in →'; });
       return;
