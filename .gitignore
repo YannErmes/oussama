@@ -1,0 +1,22 @@
+# Secrets — NEVER commit these
+service-account.json
+*-service-account*.json
+*.env
+.env.local
+supabase-keys.txt
+
+# Local database (regenerated on first run)
+loyal.db
+loyal.db-journal
+loyalup-*.db
+
+# Python
+__pycache__/
+*.pyc
+
+# Node / OS
+node_modules/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -149,7 +149,7 @@ def get_or_create_business(c, name, pw, profile=None, silent=False):
                float(profile.get("lat") or 0), float(profile.get("lng") or 0),
                str(profile.get("loc_label", "") or ""), now_iso()))
     c.execute("INSERT OR IGNORE INTO config VALUES(?,?,?)", (bid, "business", name))
-    c.execute("INSERT OR IGNORE INTO config VALUES(?,?,?)", (bid, "issuerId", ""))
+    c.execute("INSERT OR IGNORE INTO config VALUES(?,?,?)", (bid, "issuerId", os.environ.get("GOOGLE_ISSUER_ID", "3388000000023219155")))
     c.execute("INSERT OR IGNORE INTO config VALUES(?,?,?)", (bid, "classId", "loyalup-loyalty-class"))
     c.commit()
     if not silent:
@@ -268,8 +268,9 @@ def wallet_save_url(bid, member_id):
     cfg = get_config(bid)
     if os.path.exists(SA_FILE):
         try:
+            import json as _j
+            sa = _j.load(open(SA_FILE))
             from google.auth import crypt as gcrypt
-            sa = json.load(open(SA_FILE))
             signer = gcrypt.RSASigner.from_string(sa["private_key"], sa.get("private_key_id", ""))
             payload = {"iss": sa["client_email"], "aud": "google",
                        "typ": "savetowallet", "iat": int(time.time()),

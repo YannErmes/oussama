@@ -46,18 +46,27 @@ Option A — Vercel (recommended, routing + wallet function included):
 Option B — Netlify: drag the folder to https://app.netlify.com/drop
 (same wallet signer at `/.netlify/functions/wallet-jwt`).
 
-## 3. [YOU] Google Wallet — the only real blocker
+## 3. [DONE] Google Wallet — live
 
-1. Finish **Business profile** in the Pay & Wallet Console (required).
-2. Sidebar **Google Wallet API** → copy your **Issuer ID** (NOT Merchant ID).
-3. **Google Cloud Console** → IAM → Service Account → JSON key → download.
-4. Dashboard (yours) → Wallet integration → paste Issuer ID → Save.
-5. Online: Netlify env vars → `ISSUER_ID` + full `SERVICE_ACCOUNT_JSON`.
-   Local test: `pip install google-auth` + save file as `service-account.json`
-   next to `server.py` → `/api/wallet/jwt` flips from `demo` to `live`.
-6. Ask me to auto-create the **Loyalty Class** via API, then we test one
-   real "Add to Google Wallet" together.
-7. Wait for **Google approval** — nothing else to build meanwhile.
+✅ **Issuer ID:** `3388000000023219155`
+✅ **Class ID:** `loyalup-loyalty-class` (full: `3388000000023219155.loyalup-loyalty-class`)
+✅ **Service account:** `loyalupapp@sonorous-folio-511917-v5.iam.gserviceaccount.com`
+
+The "Add to Google Wallet" button already returns **live signed links**
+(`/api/wallet/jwt` → mode: `live`). Remaining:
+
+- [ ] **Publish**: console → Google Wallet API → Manage → switch class to
+      `UNDER_REVIEW` + complete Business profile (needed for the button to work
+      on real customers' phones; testing works in demo mode meanwhile)
+- [ ] **Online env vars** (Vercel → Environment Variables):
+      - `SERVICE_ACCOUNT_JSON` = full contents of service-account.json
+      - `ISSUER_ID` = `3388000000023219155`
+      - `SUPABASE_URL`, `SUPABASE_KEY` (optional membership check)
+- [ ] **Auto-updating stamps** (nice-to-have, later): needs the
+      `walletobjects.issuer` OAuth scope, which Google refused during setup.
+      Stamps can be refreshed by re-adding the pass until then.
+- [ ] **Rotate the key** — `oussama-app-511914` and the first JSON were pasted
+      in chat; delete both keys in Google Cloud and use only the new one.
 
 **Send me:** Issuer ID + service-account.json (keep private — never commit it).
 
