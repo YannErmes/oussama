@@ -139,7 +139,7 @@
     finder(0, 0); finder(n - 7, 0); finder(0, n - 7);
     el.appendChild(c);
   }
-  function origin() { try { return location.origin; } catch (e) { return 'https://loyalup.ma'; } }
+  function origin() { try { return location.origin; } catch (e) { return 'https://loyalup-chi.vercel.app'; } }
   function memberURL(m) { return origin() + '/join.html?b=' + bizId() + '&m=' + m.id; }
   function businessJoinURL() { return origin() + '/join.html?b=' + bizId(); }
 

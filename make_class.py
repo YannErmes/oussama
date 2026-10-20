@@ -12,7 +12,8 @@ from google.auth.transport.requests import Request
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SA = os.path.join(ROOT, "service-account.json")
-SCOPE = "https://www.googleapis.com/auth/cloud-platform"
+SCOPE = "https://www.googleapis.com/auth/wallet_object.issuer"
+BASE = "https://walletobjects.googleapis.com/walletobjects/v1"
 
 
 def load():
@@ -48,7 +49,7 @@ def main():
     token = creds.token
 
     try:
-        existing = call("https://walletobjects.googleapis.com/walletobjects/v1/issuerAccounts/%s/loyaltyClass?limit=100" % issuer,
+        existing = call(BASE + "/loyaltyClass?issuerId=%s&limit=100" % issuer,
                         "GET", None, token)
         for c in existing.get("loyaltyClass", []):
             print("Already exists:", c["id"])
@@ -57,22 +58,29 @@ def main():
     except SystemExit:
         print("(no existing class found / list unavailable, creating new)")
 
+    site = os.environ.get("WALLET_SITE_URL", "https://loyalup-chi.vercel.app")
     payload = {
         "id": issuer + ".loyalup-loyalty-class",
-        "issuerName": biz,
-        "reviewStatus": "UNDER_REVIEW",
-        "localizedDescription": {"description": "Visit, collect stamps and earn rewards with %s." % biz},
-        "programLogo": {"sourceUri": {"uri": "https://loyalup-ma.vercel.app/logo.png"}},
-        "heroImage": {"sourceUri": {"uri": "https://loyalup-ma.vercel.app/hero.png"}},
+        "issuerName": biz[:20],
+        "reviewStatus": "UNDER_REVIEW",        "hexBackgroundColor": "#0A1F33",
+        "programName": biz[:20],
+        "programLogo": {
+            "sourceUri": {"uri": site.rstrip("/") + "/logo.png"},
+            "contentDescription": {"defaultValue": {"language": "en-US", "value": "LoyalUp"}},
+        },
+        "heroImage": {
+            "sourceUri": {"uri": site.rstrip("/") + "/hero.png"},
+            "contentDescription": {"defaultValue": {"language": "en-US", "value": "LoyalUp"}},
+        },
+        "homepageUri": {"uri": site, "description": "Open LoyalUp"},
         "textModulesData": [
             {"header": "How it works", "body": {"text": "Scan the business QR to join, then show your card at every visit to collect stamps."},
              "id": "HOW"},
-            {"header": "Rewards", "body": {"text": "10 stamps = 1 free reward. Extra points on special occasions like Christmas."},
+            {"header": "Rewards", "body": {"text": "10 stamps = 1 free reward. Bonus points on special occasions."},
              "id": "REWARDS"},
         ],
-        "links": [{"uri": "https://loyalup-ma.vercel.app", "description": "Open LoyalUp"}],
     }
-    out = call("https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass", "POST", payload, token)
+    out = call(BASE + "/loyaltyClass", "POST", payload, token)
     print("Created loyalty class:", out.get("id"))
     print("CLASS_ID=" + out.get("id", "").split(".")[-1])
     print("Issuer used:", issuer)

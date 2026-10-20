@@ -2,6 +2,8 @@
  * Env vars (Netlify dashboard -> Site settings -> Environment):
  *   SERVICE_ACCOUNT_JSON = full service-account.json contents
  *   ISSUER_ID            = your Google Wallet Issuer ID
+ *   WALLET_SITE_URL      = public site URL (default https://loyalup-chi.vercel.app)
+ *   WALLET_ORIGINS       = comma-separated allowed origins
  *   SUPABASE_URL / SUPABASE_KEY (optional: verifies member belongs to business)
  * GET /.netlify/functions/wallet-jwt?b=BIZ&member=ID -> {saveUrl, mode}
  * Without env vars it returns DEMO mode (same link shape) so the site works now.
@@ -10,6 +12,60 @@ const crypto = require("node:crypto");
 
 const b64 = (buf) => Buffer.from(buf).toString("base64url");
 const b64json = (o) => b64(JSON.stringify(o));
+
+const SITE = process.env.WALLET_SITE_URL || "https://loyalup-chi.vercel.app";
+const CLASS_SUFFIX = "loyalup-loyalty-class";
+
+function origins() {
+  const raw = process.env.WALLET_ORIGINS || SITE;
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+function classPayload(issuer, bizName) {
+  const name = (bizName || "LoyalUp").slice(0, 20);
+  return {
+    id: `${issuer}.${CLASS_SUFFIX}`,
+    issuerName: name,
+    reviewStatus: "UNDER_REVIEW",
+    hexBackgroundColor: "#0A1F33",
+    programName: name,
+    programLogo: {
+      sourceUri: { uri: SITE.replace(/\/$/, "") + "/logo.png" },
+      contentDescription: { defaultValue: { language: "en-US", value: "LoyalUp" } },
+    },
+    heroImage: {
+      sourceUri: { uri: SITE.replace(/\/$/, "") + "/hero.png" },
+      contentDescription: { defaultValue: { language: "en-US", value: "LoyalUp" } },
+    },
+    homepageUri: { uri: SITE, description: "Open LoyalUp" },
+    textModulesData: [
+      { header: "How it works", body: { text: "Scan the store QR to join, then show your card at every visit to collect stamps." }, id: "HOW" },
+      { header: "Rewards", body: { text: "10 stamps = 1 free reward. Bonus points on special occasions." }, id: "REWARDS" },
+    ],
+  };
+}
+
+function objectPayload(issuer, member, biz, memberRow) {
+  const obj = {
+    id: `${issuer}.${member.replace(/-/g, "").toLowerCase().slice(0, 20)}`,
+    classId: `${issuer}.${CLASS_SUFFIX}`,
+    state: "ACTIVE",
+    accountId: member,
+    accountName: ((memberRow && memberRow.name) || member).slice(0, 20),
+    barcode: { type: "QR_CODE", value: member },
+    linksModuleData: {
+      uris: [{ uri: SITE.replace(/\/$/, "") + "/join.html?b=" + encodeURIComponent(biz) + "&m=" + encodeURIComponent(member),
+               description: "Open my loyalty card", id: "CARD" }],
+    },
+  };
+  if (memberRow && memberRow.points !== undefined && memberRow.points !== null) {
+    obj.loyaltyPoints = { label: "Points", balance: { int: Number(memberRow.points) } };
+  }
+  if (memberRow && memberRow.stamps !== undefined && memberRow.stamps !== null) {
+    obj.secondaryLoyaltyPoints = { label: "Stamps", balance: { int: Number(memberRow.stamps) } };
+  }
+  return obj;
+}
 
 exports.handler = async (event) => {
   const q = event.queryStringParameters || {};
@@ -27,18 +83,23 @@ exports.handler = async (event) => {
   }
   try {
     const sa = JSON.parse(saRaw);
-    // optional membership check
+    let memberRow = null;
+    let bizName = "";
     if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY && biz) {
-      const r = await fetch(`${process.env.SUPABASE_URL}/rest/v1/members?id=eq.${encodeURIComponent(member)}&business_id=eq.${encodeURIComponent(biz)}&select=id`, {
+      const r = await fetch(`${process.env.SUPABASE_URL}/rest/v1/members?id=eq.${encodeURIComponent(member)}&business_id=eq.${encodeURIComponent(biz)}&select=id,name,points,stamps`, {
         headers: { apikey: process.env.SUPABASE_KEY, Authorization: "Bearer " + process.env.SUPABASE_KEY } });
       const rows = await r.json();
       if (!rows || !rows.length) return json({ error: "Unknown card." }, 404);
+      memberRow = rows[0];
+      const br = await fetch(`${process.env.SUPABASE_URL}/rest/v1/businesses?id=eq.${encodeURIComponent(biz)}&select=name`, {
+        headers: { apikey: process.env.SUPABASE_KEY, Authorization: "Bearer " + process.env.SUPABASE_KEY } });
+      const brows = await br.json();
+      if (brows && brows.length) bizName = brows[0].name || "";
     }
-    const classId = `${issuer}.loyalup-loyalty-class`;
     const payload = { iss: sa.client_email, aud: "google", typ: "savetowallet", iat: Math.floor(Date.now() / 1000),
-      payload: { loyaltyObjects: [{ id: `${issuer}.${member.replace(/-/g, "").toLowerCase().slice(0, 20)}`,
-        classId, state: "active", accountId: member, accountName: member,
-        barcode: { type: "qrCode", value: member } }] } };
+      origins: origins(),
+      payload: { loyaltyClasses: [classPayload(issuer, bizName)],
+                  loyaltyObjects: [objectPayload(issuer, member, biz, memberRow)] } };
     const head = b64json({ alg: "RS256", typ: "JWT" });
     const body = b64json(payload);
     const sign = crypto.createSign("RSA-SHA256");

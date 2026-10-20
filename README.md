@@ -46,27 +46,61 @@ Option A — Vercel (recommended, routing + wallet function included):
 Option B — Netlify: drag the folder to https://app.netlify.com/drop
 (same wallet signer at `/.netlify/functions/wallet-jwt`).
 
-## 3. [DONE] Google Wallet — live
+## 3. Google Wallet — live (one step left: invite the service account)
 
 ✅ **Issuer ID:** `3388000000023219155`
 ✅ **Class ID:** `loyalup-loyalty-class` (full: `3388000000023219155.loyalup-loyalty-class`)
-✅ **Service account:** `loyalupapp@sonorous-folio-511917-v5.iam.gserviceaccount.com`
+✅ **Service account:** `loyalupyann@loyalup-511914.iam.gserviceaccount.com`
+✅ **OAuth scope:** `https://www.googleapis.com/auth/wallet_object.issuer`
+   (NOT `cloud-platform` and NOT `walletobjects` — both are rejected)
 
-The "Add to Google Wallet" button already returns **live signed links**
-(`/api/wallet/jwt` → mode: `live`). Remaining:
+The "Add to Google Wallet" button returns **live signed links**
+(`/api/wallet/jwt` → mode: `live`), each JWT carrying the class AND the
+object plus `origins` (required, or the button refuses to render).
 
-- [ ] **Publish**: console → Google Wallet API → Manage → switch class to
-      `UNDER_REVIEW` + complete Business profile (needed for the button to work
-      on real customers' phones; testing works in demo mode meanwhile)
+### ⬜ THE ONE THING LEFT — invite the service account
+
+The JWT must be signed by a service account that is a **member of the issuer
+account**. The current key works but is not yet linked to the issuer, so
+Google answers `403 Permission denied`.
+
+1. Go to https://pay.google.com/business/console/ → **Google Wallet API**
+2. Left nav → **Users** → **Invite a user**
+3. Email: `loyalupyann@loyalup-511914.iam.gserviceaccount.com`
+4. **Access level:** `Developer` → **Invite**
+5. Verify it worked:
+   ```bash
+   python verify_wallet.py
+   ```
+   Every line must read `OK` (or `WARN` for the not-yet-deployed images).
+
+### Remaining checklist
+
+- [ ] **Invite the service account** (above) — required for the save link
+- [ ] **Deploy the site** so `/logo.png` + `/hero.png` are publicly reachable.
+      Google fetches those images itself; a 404 logo renders a blank card.
+      Live site: **https://loyalup-chi.vercel.app** (Vercel auto-deploys on
+      every push to `main`, so committing the images publishes them).
+      `python make_images.py` regenerates them at Google's spec sizes
+      (logo 1024x1024, hero 1032x812).
 - [ ] **Online env vars** (Vercel → Environment Variables):
       - `SERVICE_ACCOUNT_JSON` = full contents of service-account.json
       - `ISSUER_ID` = `3388000000023219155`
+      - `WALLET_SITE_URL` = `https://loyalup-chi.vercel.app`
+      - `WALLET_ORIGINS` = `https://loyalup-chi.vercel.app` (comma-separated
+        if you use several domains)
       - `SUPABASE_URL`, `SUPABASE_KEY` (optional membership check)
-- [ ] **Auto-updating stamps** (nice-to-have, later): needs the
-      `walletobjects.issuer` OAuth scope, which Google refused during setup.
-      Stamps can be refreshed by re-adding the pass until then.
-- [ ] **Rotate the key** — `oussama-app-511914` and the first JSON were pasted
-      in chat; delete both keys in Google Cloud and use only the new one.
+- [ ] **Auto-updating stamps** (nice-to-have, later): needs the same
+      `wallet_object.issuer` scope via the REST API — now that the scope is
+      correct this is only blocked on the invite step above.
+- [ ] **Rotate the key** ✅ done — current key belongs to
+      `loyalupyann@loyalup-511914.iam.gserviceaccount.com`.
+      Delete the two older service accounts (`loyalupapp@loyalup-511914`
+      and `loyalup-wallet@oussama-app-511914`) in Google Cloud.
+- [ ] **Demo mode → live**: console → Manage → `Get publishing access` →
+      **Request publishing access** (needs the class created + business
+      profile complete + pass screenshots). Until approved, passes only work
+      for **test accounts** and are stamped `[TEST ONLY]`.
 
 **Send me:** Issuer ID + service-account.json (keep private — never commit it).
 
@@ -93,8 +127,13 @@ The "Add to Google Wallet" button already returns **live signed links**
 - `js/cloud.js` — Supabase adapter (active only when keys are real)
 - `js/app.js`, `js/dashboard.js` — page logic
 - `server.py` + `loyal.db` — local backend + DB (zero installs)
+- `api/wallet-jwt.js` — Vercel signer (serverless)
+- `netlify/functions/wallet-jwt.js` — Netlify signer (serverless)
+- `make_class.py` — create/patch the loyalty class via the REST API
+- `make_images.py` — regenerate `logo.png` + `hero.png` (pass artwork)
+- `verify_wallet.py` — diagnose the whole Google Wallet setup in one command
 - `supabase/schema.sql` — online DB schema (run once in Supabase)
-- `netlify.toml` + `netlify/functions/wallet-jwt.js` — deploy + wallet signer
+- `netlify.toml` + `vercel.json` — deploy config
 
 ## 6. Founder access (SaaS owner)
 

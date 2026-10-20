@@ -259,6 +259,59 @@ def do_scan(bid, member_id, force=False):
     return {"member": m, "points": pts, "bonuses": bonuses, "reward": reward}
 
 # ---------------- Google Wallet JWT ----------------
+# Class + object are shipped together in the JWT so a brand-new pass works even
+# before the class exists in the API. Google creates/updates both on save.
+WALLET_SITE = os.environ.get("WALLET_SITE_URL", "https://loyalup-chi.vercel.app")
+WALLET_CLASS_SUFFIX = "loyalup-loyalty-class"
+
+def _wallet_origins():
+    raw = os.environ.get("WALLET_ORIGINS", WALLET_SITE)
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+def _wallet_class_payload(issuer, biz_name, site):
+    return {
+        "id": "%s.%s" % (issuer, WALLET_CLASS_SUFFIX),
+        "issuerName": (biz_name or "LoyalUp")[:20],
+        "reviewStatus": "UNDER_REVIEW",        "hexBackgroundColor": "#0A1F33",
+        "programName": (biz_name or "LoyalUp")[:20],
+        "programLogo": {
+            "sourceUri": {"uri": site.rstrip("/") + "/logo.png"},
+            "contentDescription": {"defaultValue": {"language": "en-US", "value": "LoyalUp"}},
+        },
+        "heroImage": {
+            "sourceUri": {"uri": site.rstrip("/") + "/hero.png"},
+            "contentDescription": {"defaultValue": {"language": "en-US", "value": "LoyalUp"}},
+        },
+        "homepageUri": {"uri": site, "description": "Open LoyalUp"},
+        "textModulesData": [
+            {"header": "How it works",
+             "body": {"text": "Scan the store QR to join, then show your card at every visit to collect stamps."},
+             "id": "HOW"},
+            {"header": "Rewards",
+             "body": {"text": "10 stamps = 1 free reward. Bonus points on special occasions."},
+             "id": "REWARDS"},
+        ],
+    }
+
+def _wallet_object_payload(issuer, member_id, member, site):
+    obj = {
+        "id": "%s.%s" % (issuer, member_id.replace("-", "").lower()[:20]),
+        "classId": "%s.%s" % (issuer, WALLET_CLASS_SUFFIX),
+        "state": "ACTIVE",
+        "accountId": member_id,
+        "accountName": (member.get("name") or member_id)[:20],
+        "barcode": {"type": "QR_CODE", "value": member_id},
+        "linksModuleData": {"uris": [
+            {"uri": site.rstrip("/") + "/join.html?b=%s&m=%s" % (member.get("businessId", ""), member_id),
+             "description": "Open my loyalty card", "id": "CARD"},
+        ]},
+    }
+    if member.get("points") is not None:
+        obj["loyaltyPoints"] = {"label": "Points", "balance": {"int": int(member["points"])}}
+    if member.get("stamps") is not None:
+        obj["secondaryLoyaltyPoints"] = {"label": "Stamps", "balance": {"int": int(member["stamps"])}}
+    return obj
+
 def demo_save_url(member_id):
     raw = json.dumps({"iss": "demo@loyalup", "member": member_id}).encode()
     jwt = "DEMO." + base64.urlsafe_b64encode(raw).rstrip(b"=").decode() + ".SIGN_WITH_BACKEND"
@@ -266,19 +319,31 @@ def demo_save_url(member_id):
 
 def wallet_save_url(bid, member_id):
     cfg = get_config(bid)
+    member = {}
+    try:
+        c = db()
+        row = c.execute("SELECT * FROM members WHERE id=? AND businessId=?", (member_id, bid)).fetchone()
+        if row:
+            member = member_with_messages(c, row)
+            member["businessId"] = bid
+        c.close()
+    except Exception:
+        member = {}
     if os.path.exists(SA_FILE):
         try:
             import json as _j
             sa = _j.load(open(SA_FILE))
             from google.auth import crypt as gcrypt
             signer = gcrypt.RSASigner.from_string(sa["private_key"], sa.get("private_key_id", ""))
+            issuer = cfg.get("issuerId", "")
+            site = WALLET_SITE
             payload = {"iss": sa["client_email"], "aud": "google",
                        "typ": "savetowallet", "iat": int(time.time()),
-                       "payload": {"loyaltyObjects": [{
-                           "id": "%s.%s" % (cfg.get("issuerId", ""), member_id.replace("-", "").lower()[:20]),
-                           "classId": "%s.%s" % (cfg.get("issuerId", ""), cfg.get("classId", "")),
-                           "state": "active", "accountId": member_id,
-                           "accountName": member_id, "barcode": {"type": "qrCode", "value": member_id}}]}}
+                       "origins": _wallet_origins(),
+                       "payload": {
+                           "loyaltyClasses": [_wallet_class_payload(issuer, cfg.get("business", ""), site)],
+                           "loyaltyObjects": [_wallet_object_payload(issuer, member_id, member, site)],
+                       }}
             seg = [base64.urlsafe_b64encode(json.dumps({"alg": "RS256", "typ": "JWT"}).encode()).rstrip(b"=").decode(),
                    base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=").decode()]
             sig = signer.sign(".".join(seg).encode())
